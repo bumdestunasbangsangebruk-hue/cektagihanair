@@ -151,21 +151,25 @@ auth.getRedirectResult().then((result) => {
     }
 
     // Cek Login Admin
-   auth.onAuthStateChanged(user => {
-    const panel = document.getElementById('adminPanel');
+   // 1. Pantau Perubahan Status Login
+auth.onAuthStateChanged(user => {
+    const panel = document.getElementById('adminPanel'); // Pastikan ID ini SAMA dengan yang ada di <div> panel kuning
     
     if (user) {
-        // Ganti email di bawah ini agar sesuai dengan yang terdaftar di Firebase
-        if (user.email.toLowerCase() === "sulton.stsj@gmail.com") {
-            panel.style.display = 'block'; 
-            tampilkanData(globalData); 
-            console.log("Admin berhasil masuk!");
+        const emailUser = user.email.toLowerCase().trim();
+        console.log("Mencoba login dengan email:", emailUser);
+
+        // Gunakan email yang sudah Sultan daftarkan di Firebase
+        if (emailUser === "sulton.stsj@gmail.com") {
+            panel.setAttribute("style", "display: block !important"); // Paksa muncul
+            alert("Login Berhasil sebagai Admin: " + emailUser);
+            tampilkanData(globalData);
         } else {
-            alert("Akses Ditolak! Akun " + user.email + " bukan Admin.");
+            alert("Akses Ditolak! Akun " + emailUser + " tidak terdaftar sebagai pengelola.");
             auth.signOut();
         }
     } else {
-        panel.style.display = 'none';
+        if(panel) panel.style.display = 'none';
     }
 });
 
