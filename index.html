@@ -30,6 +30,16 @@ text-align:center;
 border-radius:12px;
 }
 
+.logo{
+width:70px;
+height:70px;
+object-fit:contain;
+background:white;
+padding:6px;
+border-radius:50%;
+margin-bottom:10px;
+}
+
 .card{
 background:white;
 padding:15px;
@@ -39,11 +49,11 @@ box-shadow:0 2px 6px rgba(0,0,0,.1);
 }
 
 input,select,button{
+width:100%;
 padding:10px;
+margin-top:6px;
 border-radius:8px;
 border:1px solid #ccc;
-margin-top:5px;
-width:100%;
 box-sizing:border-box;
 }
 
@@ -58,13 +68,15 @@ cursor:pointer;
 .red{background:var(--red);color:white;}
 .orange{background:var(--orange);color:white;}
 
-.hidden{display:none;}
+.hidden{
+display:none;
+}
 
 table{
 width:100%;
 border-collapse:collapse;
 font-size:13px;
-min-width:1400px;
+min-width:1600px;
 }
 
 th,td{
@@ -77,8 +89,15 @@ th{
 background:#f8f9fa;
 }
 
-.status-lunas{color:green;font-weight:bold;}
-.status-belum{color:red;font-weight:bold;}
+.status-lunas{
+color:green;
+font-weight:bold;
+}
+
+.status-belum{
+color:red;
+font-weight:bold;
+}
 </style>
 </head>
 
@@ -88,40 +107,38 @@ background:#f8f9fa;
 <div class="card" id="loginBox">
 <h3>🔐 Login Sistem</h3>
 
-<input type="text" id="username" placeholder="Masukkan Username">
-<input type="password" id="password" placeholder="Masukkan Password">
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
 
 <button class="btn" onclick="login()">Login</button>
 </div>
 
 <!-- HEADER -->
 <div class="header">
+<img src="image_916921.png" class="logo">
 
-    <!-- LOGO -->
-    <img src="image_916921.png" class="logo">
-
-    <h2 style="margin:8px 0 0 0;">TIRTO LANGGENG</h2>
-    <p style="margin:5px 0 0 0;">BUMDes Tunas Bangsa Ngebruk</p>
-
+<h2 style="margin:0;">TIRTO LANGGENG</h2>
+<p style="margin:5px 0 0 0;">BUMDes Tunas Bangsa Ngebruk</p>
 </div>
 
-<!-- ADMIN -->
+<!-- ADMIN PANEL -->
 <div class="card hidden" id="adminPanel">
 <h3>🔓 Mode Admin</h3>
 
 <input type="file" id="csvFile" accept=".csv">
+
 <button class="btn" onclick="uploadCSV()">Upload CSV</button>
 <button class="orange" onclick="downloadCSV()">Download CSV</button>
 <button class="red" onclick="hapusCSV()">Delete CSV</button>
 <button class="red" onclick="logout()">Logout</button>
 </div>
 
-<!-- KOLEKTOR -->
+<!-- KOLEKTOR PANEL -->
 <div class="card hidden" id="kolektorPanel">
 <h3>💰 Mode Kolektor</h3>
 
-<select id="filterArea" onchange="filterArea()">
-<option value="">-- Pilih Area / Blok --</option>
+<select id="filterKolektor" onchange="pilihKolektor()">
+<option value="">-- Pilih Nama Kolektor --</option>
 </select>
 
 <button class="green" onclick="simpanPerubahan()">💾 Simpan Perubahan</button>
@@ -130,7 +147,7 @@ background:#f8f9fa;
 
 <!-- SEARCH -->
 <div class="card">
-<input type="text" id="cari" placeholder="Cari pelanggan..." onkeyup="filterTabel()">
+<input type="text" id="cari" placeholder="Cari pelanggan..." onkeyup="cariData()">
 </div>
 
 <!-- TABLE -->
@@ -142,6 +159,7 @@ background:#f8f9fa;
 <th>Konsumen</th>
 <th>Alamat</th>
 <th>Blok</th>
+<th>Kolektor</th>
 <th>Meter Lama</th>
 <th>Meter Sekarang</th>
 <th>Pemakaian</th>
@@ -154,7 +172,7 @@ background:#f8f9fa;
 
 <tbody id="bodyTabel">
 <tr>
-<td colspan="11" style="text-align:center;padding:20px;">
+<td colspan="12" style="text-align:center;padding:20px;">
 Belum ada data
 </td>
 </tr>
@@ -170,18 +188,25 @@ let filteredData = [];
 // ================= LOGIN =================
 function login(){
 
-let u = document.getElementById("username").value.trim();
-let p = document.getElementById("password").value.trim();
+let user =
+document.getElementById("username").value.trim();
 
-if(u==="Admin" && p==="Tun@s123"){
-role="admin";
+let pass =
+document.getElementById("password").value.trim();
+
+if(user==="Admin" && pass==="Tun@s123"){
+
+role = "admin";
 localStorage.setItem("role","admin");
 masuk();
+
 }
-else if(u==="kolektor" && p==="bpsab123"){
-role="kolektor";
+else if(user==="kolektor" && pass==="bpsab123"){
+
+role = "kolektor";
 localStorage.setItem("role","kolektor");
 masuk();
+
 }
 else{
 alert("Username / Password salah!");
@@ -204,27 +229,29 @@ loadData();
 }
 
 function logout(){
+
 localStorage.removeItem("role");
 location.reload();
 }
 
-// ================= AUTO LOGIN =================
+// ================= LOAD SAAT BUKA =================
 window.onload=function(){
 
 let r = localStorage.getItem("role");
 
 if(r){
-role=r;
+role = r;
 masuk();
 }else{
 loadData();
 }
 }
 
-// ================= CSV =================
+// ================= UPLOAD CSV =================
 function uploadCSV(){
 
-let file = document.getElementById("csvFile").files[0];
+let file =
+document.getElementById("csvFile").files[0];
 
 if(!file){
 alert("Pilih file CSV");
@@ -245,7 +272,7 @@ localStorage.setItem(
 JSON.stringify(globalData)
 );
 
-isiFilterArea();
+isiKolektor();
 render(filteredData);
 
 alert("Upload berhasil");
@@ -253,114 +280,111 @@ alert("Upload berhasil");
 });
 }
 
+// ================= LOAD DATA =================
 function loadData(){
 
 let data = localStorage.getItem("tirtoData");
 
 if(data){
+
 globalData = JSON.parse(data);
 filteredData = globalData;
-isiFilterArea();
+
+isiKolektor();
 render(filteredData);
 }
 }
 
-function downloadCSV(){
+// ================= ISI FILTER KOLEKTOR =================
+function isiKolektor(){
 
-if(globalData.length===0){
-alert("Data kosong");
-return;
-}
+let select =
+document.getElementById("filterKolektor");
 
-let csv = Papa.unparse(globalData);
-
-let blob = new Blob([csv],{
-type:"text/csv;charset=utf-8;"
-});
-
-let link = document.createElement("a");
-link.href = URL.createObjectURL(blob);
-link.download = "Tagihan.csv";
-link.click();
-}
-
-function hapusCSV(){
-
-if(confirm("Hapus semua data?")){
-
-globalData=[];
-filteredData=[];
-localStorage.removeItem("tirtoData");
-render([]);
-}
-}
-
-// ================= FILTER AREA =================
-function isiFilterArea(){
-
-let select = document.getElementById("filterArea");
 if(!select) return;
 
-let bloks = [...new Set(globalData.map(x=>x["Blok"] || ""))];
+let list = [
+...new Set(
+globalData.map(x => x["Kolektor"] || "")
+)
+];
 
 select.innerHTML =
-'<option value="">-- Pilih Area / Blok --</option>';
+'<option value="">-- Pilih Nama Kolektor --</option>';
 
-bloks.forEach(b=>{
-if(b!=""){
+list.forEach(nama=>{
+
+if(nama!=""){
 select.innerHTML +=
-`<option value="${b}">${b}</option>`;
+`<option value="${nama}">${nama}</option>`;
 }
+
 });
 }
 
-function filterArea(){
+// ================= PILIH KOLEKTOR =================
+function pilihKolektor(){
 
-let area =
-document.getElementById("filterArea").value;
+let nama =
+document.getElementById("filterKolektor").value;
 
-if(area===""){
+if(nama===""){
 filteredData = globalData;
 }else{
 filteredData =
-globalData.filter(x=>x["Blok"]===area);
+globalData.filter(
+x => x["Kolektor"] === nama
+);
 }
 
 render(filteredData);
 }
 
-// ================= RENDER =================
+// ================= TAMPILKAN DATA =================
 function render(data){
 
-let body = document.getElementById("bodyTabel");
+let body =
+document.getElementById("bodyTabel");
 
 if(data.length===0){
-body.innerHTML=`
-<tr>
-<td colspan="11" style="text-align:center">
+
+body.innerHTML =
+`<tr>
+<td colspan="12" style="text-align:center">
 Belum ada data
 </td>
 </tr>`;
+
 return;
 }
 
-body.innerHTML="";
+body.innerHTML = "";
 
 data.forEach((row,i)=>{
 
-let lama = Number(row["Awal  Meter"] || 0);
-let sekarang = Number(row["Meter Sekarang"] || lama);
-let pakai = sekarang - lama;
+let lama =
+Number(row["Awal  Meter"] || 0);
 
+let sekarang =
+Number(row["Meter Sekarang"] || lama);
+
+let pakai = sekarang - lama;
 if(pakai < 0) pakai = 0;
 
-let tagihan = Number(row["Tagihan"] || 0);
-let bayar = Number(row["Bayar"] || 0);
+let tagihan =
+Number(row["Tagihan"] || 0);
+
+let bayar =
+Number(row["Bayar"] || 0);
+
 let sisa = tagihan - bayar;
 
 let status =
-sisa<=0 ? "Sudah Bayar" : "Belum Bayar";
+sisa <= 0 ?
+"Sudah Bayar" :
+"Belum Bayar";
 
+// ===== MODE KOLEKTOR =====
 if(role==="kolektor"){
 
 body.innerHTML += `
@@ -374,7 +398,7 @@ onchange="ubah('${row["No"]}','Alamat',this.value)">
 </td>
 
 <td>${row["Blok"] || ""}</td>
-
+<td>${row["Kolektor"] || ""}</td>
 <td>${lama}</td>
 
 <td>
@@ -384,7 +408,6 @@ onchange="ubah('${row["No"]}','Meter Sekarang',this.value)">
 </td>
 
 <td>${pakai}</td>
-
 <td>${tagihan}</td>
 
 <td class="${status==='Sudah Bayar'?'status-lunas':'status-belum'}">
@@ -401,7 +424,9 @@ onchange="ubah('${row["No"]}','Bayar',this.value)">
 </tr>
 `;
 
-}else{
+}
+// ===== MODE ADMIN / UMUM =====
+else{
 
 body.innerHTML += `
 <tr>
@@ -409,13 +434,16 @@ body.innerHTML += `
 <td>${row["Konsumen"] || ""}</td>
 <td>${row["Alamat"] || ""}</td>
 <td>${row["Blok"] || ""}</td>
+<td>${row["Kolektor"] || ""}</td>
 <td>${lama}</td>
 <td>${sekarang}</td>
 <td>${pakai}</td>
 <td>${tagihan}</td>
+
 <td class="${status==='Sudah Bayar'?'status-lunas':'status-belum'}">
 ${status}
 </td>
+
 <td>${bayar}</td>
 <td>${sisa}</td>
 </tr>
@@ -425,17 +453,17 @@ ${status}
 });
 }
 
-// ================= EDIT =================
+// ================= EDIT DATA =================
 function ubah(no,kolom,nilai){
 
 let index =
-globalData.findIndex(x=>x["No"]==no);
+globalData.findIndex(
+x => x["No"] == no
+);
 
-if(index!==-1){
-globalData[index][kolom]=nilai;
+if(index !== -1){
+globalData[index][kolom] = nilai;
 }
-
-render(filteredData);
 }
 
 // ================= SIMPAN =================
@@ -446,18 +474,20 @@ localStorage.setItem(
 JSON.stringify(globalData)
 );
 
+render(filteredData);
+
 alert("Perubahan berhasil disimpan");
 }
 
-// ================= SEARCH =================
-function filterTabel(){
+// ================= CARI =================
+function cariData(){
 
 let key =
 document.getElementById("cari")
 .value.toLowerCase();
 
-let hasil =
-globalData.filter(x=>
+filteredData =
+globalData.filter(x =>
 
 (x["Konsumen"] || "")
 .toLowerCase()
@@ -475,10 +505,56 @@ globalData.filter(x=>
 .toLowerCase()
 .includes(key)
 
+||
+
+(x["Kolektor"] || "")
+.toLowerCase()
+.includes(key)
+
 );
 
-filteredData = hasil;
 render(filteredData);
+}
+
+// ================= DOWNLOAD =================
+function downloadCSV(){
+
+if(globalData.length===0){
+alert("Data kosong");
+return;
+}
+
+let csv = Papa.unparse(globalData);
+
+let blob =
+new Blob([csv],{
+type:"text/csv;charset=utf-8;"
+});
+
+let link =
+document.createElement("a");
+
+link.href =
+URL.createObjectURL(blob);
+
+link.download =
+"Data_Tagihan.csv";
+
+link.click();
+}
+
+// ================= HAPUS =================
+function hapusCSV(){
+
+if(confirm("Yakin hapus semua data?")){
+
+globalData = [];
+filteredData = [];
+
+localStorage.removeItem("tirtoData");
+
+render([]);
+}
 }
 </script>
 
