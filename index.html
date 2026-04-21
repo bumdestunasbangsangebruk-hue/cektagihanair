@@ -1,177 +1,371 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tirto Langgeng - Portal Admin & Konsumen</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tirto Langgeng - Portal Admin & Konsumen</title>
 
-    <style>
-        :root { --primary: #0060B1; --wa: #25D366; }
-        body { font-family: sans-serif; background: #f4f7f6; margin: 0; padding: 10px; }
-        .header { background: var(--primary); color: white; padding: 20px; text-align: center; border-radius: 12px; }
-        .logo { height: 60px; background: white; padding: 5px; border-radius: 50%; margin-bottom: 10px;}
-        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-top: 15px; }
-        
-        /* PANEL ADMIN: Pastikan ID dan Style ini benar */
-        #adminPanel { 
-            display: none; 
-            background: #fff3cd !important; 
-            border: 2px dashed #ffc107; 
-            padding: 20px;
-        }
-        
-        input[type="text"] { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid var(--primary); box-sizing: border-box; }
-        .btn-login { background: #eee; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; float: right; cursor: pointer; }
-        .btn-export { background: #e67e22; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; margin-top: 10px; font-weight: bold; cursor: pointer;}
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; min-width: 800px; }
-        th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background: #f8f9fa; }
-        .status-lunas { color: green; font-weight: bold; }
-        .status-belum { color: red; font-weight: bold; }
-    </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+<style>
+:root{
+    --primary:#0060B1;
+    --wa:#25D366;
+}
+
+body{
+    font-family:sans-serif;
+    background:#f4f7f6;
+    margin:0;
+    padding:10px;
+}
+
+.header{
+    background:var(--primary);
+    color:white;
+    padding:20px;
+    text-align:center;
+    border-radius:12px;
+}
+
+.logo{
+    height:60px;
+    background:white;
+    padding:5px;
+    border-radius:50%;
+    margin-bottom:10px;
+}
+
+.card{
+    background:white;
+    padding:15px;
+    border-radius:10px;
+    box-shadow:0 2px 5px rgba(0,0,0,0.1);
+    margin-top:15px;
+}
+
+#adminPanel{
+    display:none;
+    background:#fff3cd;
+    border:2px dashed #ffc107;
+}
+
+input[type="text"],
+input[type="password"]{
+    width:100%;
+    padding:12px;
+    border-radius:8px;
+    border:2px solid var(--primary);
+    box-sizing:border-box;
+    margin-top:8px;
+}
+
+button{
+    border:none;
+    padding:12px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.btn-login{
+    background:#0060B1;
+    color:white;
+    width:100%;
+    margin-top:10px;
+}
+
+.btn-export{
+    background:#e67e22;
+    color:white;
+    width:100%;
+    margin-top:10px;
+}
+
+.btn-delete{
+    background:red;
+    color:white;
+    width:100%;
+    margin-top:10px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
+    font-size:13px;
+    min-width:800px;
+}
+
+th,td{
+    border-bottom:1px solid #ddd;
+    padding:10px;
+    text-align:left;
+}
+
+th{
+    background:#f8f9fa;
+}
+
+.status-lunas{
+    color:green;
+    font-weight:bold;
+}
+
+.status-belum{
+    color:red;
+    font-weight:bold;
+}
+</style>
 </head>
+
 <body>
 
-<button class="btn-login" onclick="login()">Admin Login</button>
+<!-- LOGIN MANUAL -->
+<div class="card" id="loginBox">
+<h3>🔐 Login Admin</h3>
 
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+
+<button class="btn-login" onclick="login()">Login</button>
+</div>
+
+<!-- HEADER -->
 <div class="header">
-    <img src="image_916921.png" alt="Logo" class="logo">
-    <h2 style="margin:0;">TIRTO LANGGENG</h2>
-    <p style="margin:0; font-size: 13px;">BUMDes Tunas Bangsa Ngebruk</p>
+<img src="image_916921.png" class="logo">
+<h2 style="margin:0;">TIRTO LANGGENG</h2>
+<p style="margin:0;font-size:13px;">BUMDes Tunas Bangsa Ngebruk</p>
 </div>
 
+<!-- ADMIN PANEL -->
 <div id="adminPanel" class="card">
-    <h3 style="margin-top:0;">🔓 Mode Pengelola (Admin)</h3>
-    <label><b>Upload File CSV Terbaru:</b></label><br>
-    <input type="file" id="csvFile" accept=".csv" style="margin-top:10px;">
-    <button onclick="exportCSV()" class="btn-export">📥 Simpan & Download Hasil Tagihan</button>
-    <hr>
-    <button onclick="logout()" style="background:red; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Keluar / Logout</button>
+<h3>🔓 Mode Pengelola (Admin)</h3>
+
+<label><b>Upload File CSV:</b></label>
+<input type="file" id="csvFile" accept=".csv">
+
+<button onclick="exportCSV()" class="btn-export">
+📥 Download CSV
+</button>
+
+<button onclick="deleteCSV()" class="btn-delete">
+🗑 Delete CSV
+</button>
+
+<button onclick="logout()" class="btn-delete">
+🚪 Logout
+</button>
 </div>
 
+<!-- SEARCH -->
 <div class="card">
-    <input type="text" id="cari" onkeyup="filterTabel()" placeholder="🔍 Cari Nama Pelanggan atau Alamat...">
+<input type="text" id="cari" onkeyup="filterTabel()" placeholder="🔍 Cari Nama / Alamat">
 </div>
 
+<!-- TABLE -->
 <div class="card" style="overflow-x:auto;">
-    <table id="mainTable">
-        <thead>
-            <tr>
-                <th>No</th>
-                <th>Konsumen</th>
-                <th>Alamat/Blok</th>
-                <th>Awal</th>
-                <th>Akhir</th>
-                <th>Tagihan</th>
-                <th>Status</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-        <tbody id="bodyTabel">
-            <tr><td colspan="8" style="text-align:center; padding:20px;">Data kosong. Admin silakan login dan upload CSV.</td></tr>
-        </tbody>
-    </table>
+<table>
+<thead>
+<tr>
+<th>No</th>
+<th>Konsumen</th>
+<th>Alamat</th>
+<th>Awal</th>
+<th>Akhir</th>
+<th>Tagihan</th>
+<th>Status</th>
+<th>Aksi</th>
+</tr>
+</thead>
+
+<tbody id="bodyTabel">
+<tr>
+<td colspan="8" style="text-align:center;padding:20px;">
+Data kosong. Login admin lalu upload CSV.
+</td>
+</tr>
+</tbody>
+</table>
 </div>
 
 <script>
-    // --- KONFIGURASI FIREBASE ---
-    // MASUKKAN KODE SULTAN DI SINI
-    const firebaseConfig = {
-        apiKey: "AIzaSyCjpsj8LuhYM2857QmL1kCp50Mwz6aPDFM",
-        authDomain: "tirtolanggeng-39678.firebaseapp.com",
-        projectId: "tirtolanggeng-39678",
-        storageBucket: "tirtolanggeng-39678.appspot.com",
-        messagingSenderId: "391541384860",
-        appId: "1:391541384860:web:b4939f28f5adfa81a2ef59"
-    };
+// =======================
+// LOGIN MANUAL
+// =======================
+function login(){
 
-    // Inisialisasi
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+    let user = document.getElementById("username").value;
+    let pass = document.getElementById("password").value;
 
-    // Login & Logout
-    function login() {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider).catch(err => alert("Gagal: " + err.message));
+    if(user === "Admin" && pass === "Tun@s123"){
+
+        localStorage.setItem("isLogin","true");
+
+        document.getElementById("loginBox").style.display="none";
+        document.getElementById("adminPanel").style.display="block";
+
+        alert("Login berhasil");
+
+    }else{
+        alert("Username / Password salah!");
+    }
+}
+
+// =======================
+// LOGOUT
+// =======================
+function logout(){
+
+    localStorage.removeItem("isLogin");
+
+    location.reload();
+}
+
+// =======================
+// AUTO LOGIN CHECK
+// =======================
+window.onload = function(){
+
+    if(localStorage.getItem("isLogin") === "true"){
+        document.getElementById("loginBox").style.display="none";
+        document.getElementById("adminPanel").style.display="block";
     }
 
-    function logout() {
-        auth.signOut().then(() => location.reload());
-    }
+    const saved = localStorage.getItem("csvData");
 
-    // CEK STATUS LOGIN
-    auth.onAuthStateChanged(user => {
-        const panel = document.getElementById('adminPanel');
-        if (user) {
-            console.log("Login sebagai:", user.email);
-            // Sesuai permintaan Sultan, gunakan email ini
-            if (user.email.toLowerCase() === "sulton.stsj@gmail.com") {
-                panel.style.display = 'block';
-                alert("Selamat datang Admin: " + user.email);
-            } else {
-                alert("Akses Ditolak! Akun ini bukan admin.");
-                auth.signOut();
-            }
-        } else {
-            panel.style.display = 'none';
+    if(saved){
+        globalData = JSON.parse(saved);
+        tampilkanData(globalData);
+    }
+}
+
+// =======================
+// CSV
+// =======================
+let globalData = [];
+
+document.getElementById("csvFile").addEventListener("change", function(e){
+
+    Papa.parse(e.target.files[0],{
+        header:true,
+        skipEmptyLines:true,
+
+        complete:function(results){
+
+            globalData = results.data;
+
+            localStorage.setItem(
+                "csvData",
+                JSON.stringify(globalData)
+            );
+
+            tampilkanData(globalData);
+
+            alert("CSV berhasil diupload");
         }
     });
+});
 
-    // LOGIKA CSV
-    let globalData = [];
-    document.getElementById('csvFile').addEventListener('change', function(e) {
-        Papa.parse(e.target.files[0], {
-            header: true,
-            skipEmptyLines: true,
-            complete: function(results) {
-                globalData = results.data;
-                tampilkanData(globalData);
-            }
-        });
+// =======================
+// TABEL
+// =======================
+function tampilkanData(data){
+
+    const body = document.getElementById("bodyTabel");
+
+    body.innerHTML = "";
+
+    data.forEach(row=>{
+
+        if(!row["Konsumen"]) return;
+
+        let isLunas =
+        (row["Status"] || "").toLowerCase()
+        === "sudah bayar";
+
+        body.innerHTML += `
+        <tr>
+            <td>${row["No"] || ""}</td>
+            <td><b>${row["Konsumen"]}</b></td>
+            <td>${row["Alamat"] || ""}</td>
+            <td>${row["Awal  Meter"] || ""}</td>
+            <td>${row["Akhir Meter"] || ""}</td>
+            <td>Rp ${parseInt(row["Tagihan"] || 0).toLocaleString('id-ID')}</td>
+            <td class="${isLunas ? 'status-lunas':'status-belum'}">
+                ${row["Status"] || "Belum Bayar"}
+            </td>
+            <td>
+                ${isLunas ? '✅' :
+                `<a href="https://wa.me/?text=Tagihan Air ${row["Konsumen"]}" target="_blank">Hubungi</a>`}
+            </td>
+        </tr>
+        `;
     });
+}
 
-    function tampilkanData(data) {
-        const body = document.getElementById('bodyTabel');
-        body.innerHTML = '';
-        data.forEach((row, index) => {
-            if(!row["Konsumen"]) return;
-            const isLunas = (row["Status"] || "").toLowerCase() === "sudah bayar";
-            body.innerHTML += `
-                <tr>
-                    <td>${row["No"] || ""}</td>
-                    <td><b>${row["Konsumen"]}</b></td>
-                    <td>${row["Alamat"] || ""} ${row["Blok"] || ""}</td>
-                    <td>${row["Awal  Meter"]}</td>
-                    <td>${row["Akhir Meter"]}</td>
-                    <td>Rp ${parseInt(row["Tagihan"] || 0).toLocaleString('id-ID')}</td>
-                    <td class="${isLunas?'status-lunas':'status-belum'}">${row["Status"] || "Belum Bayar"}</td>
-                    <td>
-                        ${isLunas ? '✅' : `<a href="https://wa.me/?text=Tagihan%20Air%20${row['Konsumen']}" style="color:green; text-decoration:none; font-weight:bold;">Hubungi</a>`}
-                    </td>
-                </tr>
-            `;
-        });
+// =======================
+// FILTER
+// =======================
+function filterTabel(){
+
+    let key =
+    document.getElementById("cari")
+    .value.toLowerCase();
+
+    let hasil = globalData.filter(i =>
+        (i["Konsumen"] || "")
+        .toLowerCase()
+        .includes(key)
+        ||
+        (i["Alamat"] || "")
+        .toLowerCase()
+        .includes(key)
+    );
+
+    tampilkanData(hasil);
+}
+
+// =======================
+// DOWNLOAD CSV
+// =======================
+function exportCSV(){
+
+    if(globalData.length === 0){
+        alert("Data kosong");
+        return;
     }
 
-    function filterTabel() {
-        const key = document.getElementById('cari').value.toLowerCase();
-        tampilkanData(globalData.filter(i => i["Konsumen"].toLowerCase().includes(key) || (i["Alamat"] && i["Alamat"].toLowerCase().includes(key))));
-    }
+    let csv = Papa.unparse(globalData);
 
-    function exportCSV() {
-        if(globalData.length === 0) return alert("Data kosong.");
-        const csv = Papa.unparse(globalData);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "Laporan_Tagihan_Update.csv";
-        link.click();
+    let blob = new Blob(
+        [csv],
+        {type:'text/csv;charset=utf-8;'}
+    );
+
+    let link = document.createElement("a");
+
+    link.href = URL.createObjectURL(blob);
+    link.download = "Laporan_Tagihan.csv";
+    link.click();
+}
+
+// =======================
+// DELETE CSV
+// =======================
+function deleteCSV(){
+
+    if(confirm("Yakin hapus data CSV?")){
+
+        globalData = [];
+
+        localStorage.removeItem("csvData");
+
+        tampilkanData([]);
+
+        alert("Data berhasil dihapus");
     }
+}
 </script>
 
 </body>
