@@ -126,9 +126,19 @@
     const auth = firebase.auth();
 
     function login() {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider);
+    const provider = new firebase.auth.GoogleAuthProvider();
+    // Ganti Popup menjadi Redirect agar lebih lancar di HP
+    auth.signInWithRedirect(provider);
+}
+
+// Tambahkan kode ini di bawah inisialisasi auth untuk menangani hasil redirect
+auth.getRedirectResult().then((result) => {
+    if (result.user) {
+        console.log("Berhasil Login:", result.user.email);
     }
+}).catch((error) => {
+    console.error("Error Login:", error.message);
+});
 
     function logout() {
         auth.signOut().then(() => location.reload());
