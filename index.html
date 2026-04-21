@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Tirto Langgeng</title>
+<title>TIRTO LANGGENG PRO MAX</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
@@ -31,8 +31,8 @@ border-radius:12px;
 }
 
 .logo{
-width:70px;
-height:70px;
+width:75px;
+height:75px;
 object-fit:contain;
 background:white;
 padding:6px;
@@ -50,12 +50,12 @@ box-shadow:0 2px 6px rgba(0,0,0,.1);
 
 .grid{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
 gap:10px;
 }
 
 .box{
-padding:15px;
+padding:12px;
 border-radius:10px;
 color:white;
 font-weight:bold;
@@ -89,7 +89,7 @@ table{
 width:100%;
 border-collapse:collapse;
 font-size:13px;
-min-width:1800px;
+min-width:2000px;
 }
 
 th,td{
@@ -102,6 +102,8 @@ th{background:#f8f9fa;}
 
 .status-lunas{color:green;font-weight:bold;}
 .status-belum{color:red;font-weight:bold;}
+
+.wrap{overflow-x:auto;}
 </style>
 </head>
 
@@ -118,383 +120,288 @@ th{background:#f8f9fa;}
 <!-- HEADER -->
 <div class="header">
 <img src="image_916921.png" class="logo">
-<h2 style="margin:0;">TIRTO LANGGENG</h2>
-<p style="margin:5px 0 0 0;">BUMDes Tirto Langgeng Desa Ngebruk</p>
+<h2>TIRTO LANGGENG</h2>
+<p>BUMDes Tirto Langgeng Desa Ngebruk</p>
 </div>
 
 <!-- DASHBOARD -->
-<div class="card hidden" id="laporanBox">
-<h3>📊 Laporan Pembayaran</h3>
+<div class="card hidden" id="dashBox">
 <div class="grid">
-<div class="box blue">Total Data<br><span id="jmlData">0</span></div>
-<div class="box green">Sudah Bayar<br><span id="jmlLunas">0</span></div>
-<div class="box red">Belum Bayar<br><span id="jmlBelum">0</span></div>
-<div class="box orange">Total Bayar<br><span id="totalBayar">Rp0</span></div>
+<div class="box blue">Total<br><span id="dTotal">0</span></div>
+<div class="box green">Lunas<br><span id="dLunas">0</span></div>
+<div class="box red">Belum<br><span id="dBelum">0</span></div>
+<div class="box orange">Masuk<br><span id="dMasuk">Rp0</span></div>
+<div class="box blue">Tunggakan<br><span id="dTunggakan">Rp0</span></div>
 </div>
 </div>
 
-<!-- ADMIN PANEL -->
+<!-- ADMIN -->
 <div class="card hidden" id="adminPanel">
-<h3>🔓 Mode Admin</h3>
-
+<h3>🔓 Admin Panel</h3>
 <input type="file" id="csvFile" accept=".csv">
-
 <button class="btn" onclick="uploadCSV()">Upload CSV</button>
-<button class="orange" onclick="downloadTemplate()">Template Upload</button>
-<button class="orange" onclick="downloadCSV()">Download CSV</button>
-<button class="red" onclick="hapusCSV()">Delete CSV</button>
-<button class="red" onclick="logout()">Logout</button>
+<button class="btn" onclick="downloadTemplate()">Template CSV</button>
+<button class="btn" onclick="downloadCSV()">Export CSV</button>
+<button class="btn" onclick="hapus()">Hapus Data</button>
+<button class="btn" onclick="logout()">Logout</button>
 </div>
 
-<!-- KOLEKTOR PANEL -->
+<!-- KOLEKTOR -->
 <div class="card hidden" id="kolektorPanel">
-<h3>💰 Mode Kolektor</h3>
-
-<select id="filterKolektor" onchange="pilihKolektor()">
-<option value="">-- Pilih Nama Kolektor --</option>
+<h3>💰 Kolektor Panel</h3>
+<select id="filter" onchange="filterKolektor()">
+<option value="">-- Pilih Kolektor --</option>
 </select>
-
-<button class="green" onclick="simpanPerubahan()">💾 Simpan Perubahan</button>
-<button class="red" onclick="logout()">Logout</button>
+<button class="btn" onclick="save()">Simpan</button>
+<button class="btn" onclick="logout()">Logout</button>
 </div>
 
 <!-- SEARCH -->
 <div class="card">
-<input type="text" id="cari" placeholder="Cari pelanggan..." onkeyup="cariData()">
+<input id="search" placeholder="Cari data..." onkeyup="cari()">
 </div>
 
 <!-- TABLE -->
-<div class="card" style="overflow-x:auto;">
+<div class="card wrap">
 <table>
 <thead>
 <tr>
 <th>No</th>
-<th>Konsumen</th>
+<th>Nama</th>
 <th>Alamat</th>
 <th>Blok</th>
 <th>Kolektor</th>
 <th>Tipe</th>
 <th>Meter Lama</th>
 <th>Meter Sekarang</th>
-<th>Pemakaian</th>
+<th>Pakai</th>
 <th>Tarif</th>
 <th>Tagihan</th>
 <th>Status</th>
 <th>Bayar</th>
 <th>Sisa</th>
+<th>Input Meter</th>
 </tr>
 </thead>
-
-<tbody id="bodyTabel">
-<tr>
-<td colspan="14" style="text-align:center;padding:20px;">Belum ada data</td>
-</tr>
-</tbody>
+<tbody id="tabel"></tbody>
 </table>
 </div>
 
 <script>
-let role = "";
-let globalData = [];
-let filteredData = [];
 
-// LOGIN
+let data=[];
+let role="";
+
+/* ================= LOGIN ================= */
 function login(){
 
-let user = username.value.trim();
-let pass = password.value.trim();
+let u=username.value;
+let p=password.value;
 
-if(user==="Admin" && pass==="Tun@s123"){
+if(u==="Admin" && p==="Tun@s123"){
 role="admin";
-localStorage.setItem("role","admin");
-masuk();
+start();
 }
-else if(user==="kolektor" && pass==="bpsab123"){
+else if(u==="kolektor" && p==="bpsab123"){
 role="kolektor";
-localStorage.setItem("role","kolektor");
-masuk();
+start();
 }
-else{
-alert("Username / Password salah!");
-}
+else alert("Login salah");
 }
 
-function masuk(){
-
+function start(){
 loginBox.style.display="none";
-laporanBox.style.display="block";
-
-if(role==="admin"){
+dashBox.style.display="block";
 adminPanel.style.display="block";
+load();
 }
 
-if(role==="kolektor"){
-kolektorPanel.style.display="block";
-}
-
-loadData();
-}
-
-function logout(){
-localStorage.removeItem("role");
-location.reload();
-}
-
-// LOAD AWAL
-window.onload=function(){
-
-let r = localStorage.getItem("role");
-
-if(r){
-role=r;
-masuk();
-}else{
-loadData();
+/* ================= LOAD ================= */
+function load(){
+let d=localStorage.getItem("tirto");
+if(d){
+data=JSON.parse(d);
+render(data);
 }
 }
 
-// UPLOAD SUPER CEPAT
+/* ================= UPLOAD CEPAT ================= */
 function uploadCSV(){
 
-let file = csvFile.files[0];
-
-if(!file){
-alert("Pilih file CSV");
-return;
-}
+let file=csvFile.files[0];
+if(!file)return alert("Pilih file");
 
 Papa.parse(file,{
 header:true,
 skipEmptyLines:true,
 worker:true,
 fastMode:true,
-dynamicTyping:true,
 
 complete:function(res){
-
-globalData = res.data;
-filteredData = [...globalData];
-
-localStorage.setItem(
-"tirtoData",
-JSON.stringify(globalData)
-);
-
-isiKolektor();
-render(filteredData);
-
-alert("Upload berhasil : "+globalData.length+" data");
+data=res.data;
+saveLocal();
+render(data);
+alert("Upload sukses");
 }
 });
 }
 
-// LOAD DATA
-function loadData(){
-
-let data = localStorage.getItem("tirtoData");
-
-if(data){
-globalData = JSON.parse(data);
-filteredData = globalData;
-isiKolektor();
-render(filteredData);
-}
+/* ================= SAVE ================= */
+function saveLocal(){
+localStorage.setItem("tirto",JSON.stringify(data));
 }
 
-// FILTER KOLEKTOR
-function isiKolektor(){
+/* ================= DASHBOARD ================= */
+function dash(rows){
 
-let list = [...new Set(globalData.map(x=>x["Kolektor"]||""))];
+let t=rows.length,l=0,b=0,m=0,tg=0;
 
-filterKolektor.innerHTML =
-'<option value="">-- Pilih Nama Kolektor --</option>';
+rows.forEach(r=>{
 
-list.forEach(nama=>{
-if(nama!=""){
-filterKolektor.innerHTML +=
-`<option value="${nama}">${nama}</option>`;
-}
+let a=+r["Awal Meter"]||0;
+let s=+r["Meter Sekarang"]||a;
+let p=s-a;if(p<0)p=0;
+
+let tpf=r["Tipe"]==="Niaga"?800:500;
+let tag=p*tpf;
+
+let by=+r["Bayar"]||0;
+let sisa=tag-by;
+
+m+=by;tg+=sisa;
+if(sisa<=0)l++;else b++;
+
 });
+
+dTotal.innerText=t;
+dLunas.innerText=l;
+dBelum.innerText=b;
+dMasuk.innerText="Rp"+m.toLocaleString();
+dTunggakan.innerText="Rp"+tg.toLocaleString();
+
 }
 
-function pilihKolektor(){
+/* ================= RENDER SUPER CEPAT ================= */
+function render(rows){
 
-let nama = filterKolektor.value;
+let html="";
 
-if(nama===""){
-filteredData = globalData;
-}else{
-filteredData = globalData.filter(x=>x["Kolektor"]===nama);
-}
+rows.forEach((r,i)=>{
 
-render(filteredData);
-}
+let a=+r["Awal Meter"]||0;
+let s=+r["Meter Sekarang"]||a;
 
-// RENDER TERCEPAT
-function render(data){
+let p=s-a;if(p<0)p=0;
 
-let body = bodyTabel;
+let tipe=r["Tipe"]||"Rumah Tangga";
+let tarif=tipe==="Niaga"?800:500;
 
-if(data.length===0){
-body.innerHTML =
-`<tr><td colspan="14">Belum ada data</td></tr>`;
-return;
-}
+let tag=p*tarif;
+let by=+r["Bayar"]||0;
+let sisa=tag-by;
 
-let html = "";
-let lunas=0;
-let belum=0;
-let totalBayar=0;
+let st=sisa<=0?"Lunas":"Belum";
 
-for(let i=0;i<data.length;i++){
-
-let row = data[i];
-
-let tipe = row["Tipe"] || "Rumah Tangga";
-
-let lama = Number(row["Awal Meter"]||0);
-let sekarang = Number(row["Meter Sekarang"]||lama);
-
-let pakai = sekarang-lama;
-if(pakai<0) pakai=0;
-
-let tarif = tipe==="Niaga" ? 800 : 500;
-
-let tagihan = pakai * tarif;
-
-let bayar = Number(row["Bayar"]||0);
-
-let sisa = tagihan - bayar;
-
-let status = sisa<=0 ? "Sudah Bayar" : "Belum Bayar";
-
-if(status==="Sudah Bayar") lunas++;
-else belum++;
-
-totalBayar += bayar;
-
-html += `
+html+=`
 <tr>
-<td>${row["No"]||i+1}</td>
-<td>${row["Konsumen"]||""}</td>
-<td>${row["Alamat"]||""}</td>
-<td>${row["Blok"]||""}</td>
-<td>${row["Kolektor"]||""}</td>
+<td>${i+1}</td>
+<td>${r["Nama"]||""}</td>
+<td>${r["Alamat"]||""}</td>
+<td>${r["Blok"]||""}</td>
+<td>${r["Kolektor"]||""}</td>
 <td>${tipe}</td>
-<td>${lama}</td>
-<td>${sekarang}</td>
-<td>${pakai}</td>
+<td>${a}</td>
+<td>${s}</td>
+<td>${p}</td>
 <td>${tarif}</td>
-<td>${tagihan}</td>
-<td class="${status==='Sudah Bayar'?'status-lunas':'status-belum'}">${status}</td>
-<td>${bayar}</td>
+<td>${tag}</td>
+<td class="${st=='Lunas'?'status-lunas':'status-belum'}">${st}</td>
+<td>${by}</td>
 <td>${sisa}</td>
-</tr>`;
-}
+<td>${role=="kolektor"
+?`<input value="${s}" onchange="edit(${i},'Meter Sekarang',this.value)">`
+:s}</td>
+</tr>
+`;
 
-body.innerHTML = html;
-
-// laporan
-jmlData.innerText = data.length;
-jmlLunas.innerText = lunas;
-jmlBelum.innerText = belum;
-totalBayar.innerText = "Rp"+totalBayar.toLocaleString("id-ID");
-}
-
-// EDIT
-function ubah(no,kolom,nilai){
-
-let index =
-globalData.findIndex(x=>x["No"]==no);
-
-if(index!=-1){
-globalData[index][kolom]=nilai;
-}
-}
-
-// SIMPAN
-function simpanPerubahan(){
-
-localStorage.setItem(
-"tirtoData",
-JSON.stringify(globalData)
-);
-
-render(filteredData);
-
-alert("Perubahan berhasil disimpan");
-}
-
-// SEARCH
-function cariData(){
-
-let key = cari.value.toLowerCase();
-
-filteredData = globalData.filter(x=>
-
-(x["Konsumen"]||"").toLowerCase().includes(key) ||
-(x["Alamat"]||"").toLowerCase().includes(key) ||
-(x["Blok"]||"").toLowerCase().includes(key) ||
-(x["Kolektor"]||"").toLowerCase().includes(key) ||
-(x["Tipe"]||"").toLowerCase().includes(key)
-
-);
-
-render(filteredData);
-}
-
-// DOWNLOAD CSV
-function downloadCSV(){
-
-if(globalData.length===0){
-alert("Data kosong");
-return;
-}
-
-let csv = Papa.unparse(globalData);
-
-let blob = new Blob([csv],{
-type:"text/csv;charset=utf-8;"
 });
 
-let link = document.createElement("a");
-link.href = URL.createObjectURL(blob);
-link.download = "Data_Tagihan.csv";
-link.click();
+tabel.innerHTML=html;
+
+dash(rows);
+
 }
 
-// TEMPLATE CEPAT
+/* ================= EDIT ================= */
+function edit(i,k,v){
+data[i][k]=v;
+saveLocal();
+}
+
+/* ================= SAVE ================= */
+function save(){
+saveLocal();
+alert("Tersimpan");
+render(data);
+}
+
+/* ================= SEARCH ================= */
+function cari(){
+
+let k=search.value.toLowerCase();
+
+render(data.filter(x=>
+(x.Nama||"").toLowerCase().includes(k)||
+(x.Alamat||"").toLowerCase().includes(k)||
+(x.Blok||"").toLowerCase().includes(k)||
+(x.Kolektor||"").toLowerCase().includes(k)
+));
+
+}
+
+/* ================= TEMPLATE ================= */
 function downloadTemplate(){
 
-let csv =
-`No,Konsumen,Alamat,Blok,Kolektor,Tipe,Awal Meter,Meter Sekarang,Bayar
-1,Budi,Ngebruk,A1,Slamet,Rumah Tangga,100,120,10000
-2,Siti,Ngebruk,A2,Rudi,Niaga,50,70,16000
-3,Joko,Ngebruk,B1,Slamet,Rumah Tangga,90,100,5000`;
+let c=
+`Nama,Alamat,Blok,Kolektor,Tipe,Awal Meter,Meter Sekarang,Bayar
+Budi,Ngebruk,A1,Slamet,Rumah Tangga,100,120,10000`;
 
-let blob = new Blob([csv],{
-type:"text/csv;charset=utf-8;"
-});
+let b=new Blob([c],{type:"text/csv"});
+let a=document.createElement("a");
+a.href=URL.createObjectURL(b);
+a.download="template.csv";
+a.click();
 
-let link = document.createElement("a");
-link.href = URL.createObjectURL(blob);
-link.download = "Template_Tirto.csv";
-link.click();
 }
 
-// HAPUS
-function hapusCSV(){
+/* ================= EXPORT ================= */
+function downloadCSV(){
+let c=Papa.unparse(data);
+let b=new Blob([c],{type:"text/csv"});
+let a=document.createElement("a");
+a.href=URL.createObjectURL(b);
+a.download="data.csv";
+a.click();
+}
 
-if(confirm("Yakin hapus semua data?")){
-
-globalData=[];
-filteredData=[];
-
-localStorage.removeItem("tirtoData");
-
+/* ================= DELETE ================= */
+function hapus(){
+if(confirm("Hapus semua data?")){
+data=[];
+saveLocal();
 render([]);
 }
 }
+
+/* ================= INIT ================= */
+window.onload=()=>{
+let d=localStorage.getItem("tirto");
+if(d){
+data=JSON.parse(d);
+render(data);
+}
+}
+
 </script>
 
 </body>
