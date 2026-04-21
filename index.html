@@ -23,24 +23,21 @@ padding:10px;
 }
 
 .header{
-background:linear-gradient(135deg,#0060B1,#0099ff);
+background:var(--primary);
 color:white;
 padding:20px;
 text-align:center;
 border-radius:12px;
-position:relative;
-overflow:hidden;
 }
 
 .logo{
-width:80px;
-height:80px;
+width:70px;
+height:70px;
 object-fit:contain;
 background:white;
-padding:8px;
+padding:6px;
 border-radius:50%;
 margin-bottom:10px;
-box-shadow:0 0 15px rgba(255,255,255,.5);
 }
 
 .card{
@@ -50,6 +47,25 @@ border-radius:12px;
 margin-top:15px;
 box-shadow:0 2px 6px rgba(0,0,0,.1);
 }
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+gap:10px;
+}
+
+.box{
+padding:15px;
+border-radius:10px;
+color:white;
+font-weight:bold;
+text-align:center;
+}
+
+.blue{background:#3498db;}
+.green{background:#27ae60;}
+.red{background:#e74c3c;}
+.orange{background:#e67e22;}
 
 input,select,button{
 width:100%;
@@ -67,17 +83,13 @@ cursor:pointer;
 }
 
 .btn{background:var(--primary);color:white;}
-.green{background:var(--green);color:white;}
-.red{background:var(--red);color:white;}
-.orange{background:var(--orange);color:white;}
-
 .hidden{display:none;}
 
 table{
 width:100%;
 border-collapse:collapse;
 font-size:13px;
-min-width:1600px;
+min-width:1800px;
 }
 
 th,td{
@@ -88,19 +100,8 @@ text-align:left;
 
 th{background:#f8f9fa;}
 
-.status-lunas{
-color:green;
-font-weight:bold;
-}
-
-.status-belum{
-color:red;
-font-weight:bold;
-}
-
-.wrap{
-overflow-x:auto;
-}
+.status-lunas{color:green;font-weight:bold;}
+.status-belum{color:red;font-weight:bold;}
 </style>
 </head>
 
@@ -109,10 +110,8 @@ overflow-x:auto;
 <!-- LOGIN -->
 <div class="card" id="loginBox">
 <h3>🔐 Login Sistem</h3>
-
 <input type="text" id="username" placeholder="Username">
 <input type="password" id="password" placeholder="Password">
-
 <button class="btn" onclick="login()">Login</button>
 </div>
 
@@ -120,7 +119,18 @@ overflow-x:auto;
 <div class="header">
 <img src="image_916921.png" class="logo">
 <h2 style="margin:0;">TIRTO LANGGENG</h2>
-<p style="margin:5px 0 0 0;">BUMDes Tunas Bangsa Ngebruk</p>
+<p style="margin:5px 0 0 0;">BUMDes Tirto Langgeng Desa Ngebruk</p>
+</div>
+
+<!-- DASHBOARD -->
+<div class="card hidden" id="laporanBox">
+<h3>📊 Laporan Pembayaran</h3>
+<div class="grid">
+<div class="box blue">Total Data<br><span id="jmlData">0</span></div>
+<div class="box green">Sudah Bayar<br><span id="jmlLunas">0</span></div>
+<div class="box red">Belum Bayar<br><span id="jmlBelum">0</span></div>
+<div class="box orange">Total Bayar<br><span id="totalBayar">Rp0</span></div>
+</div>
 </div>
 
 <!-- ADMIN PANEL -->
@@ -130,7 +140,7 @@ overflow-x:auto;
 <input type="file" id="csvFile" accept=".csv">
 
 <button class="btn" onclick="uploadCSV()">Upload CSV</button>
-<button class="orange" onclick="downloadTemplate()">Template CSV</button>
+<button class="orange" onclick="downloadTemplate()">Template Upload</button>
 <button class="orange" onclick="downloadCSV()">Download CSV</button>
 <button class="red" onclick="hapusCSV()">Delete CSV</button>
 <button class="red" onclick="logout()">Logout</button>
@@ -154,7 +164,7 @@ overflow-x:auto;
 </div>
 
 <!-- TABLE -->
-<div class="card wrap">
+<div class="card" style="overflow-x:auto;">
 <table>
 <thead>
 <tr>
@@ -163,9 +173,11 @@ overflow-x:auto;
 <th>Alamat</th>
 <th>Blok</th>
 <th>Kolektor</th>
+<th>Tipe</th>
 <th>Meter Lama</th>
 <th>Meter Sekarang</th>
 <th>Pemakaian</th>
+<th>Tarif</th>
 <th>Tagihan</th>
 <th>Status</th>
 <th>Bayar</th>
@@ -175,9 +187,7 @@ overflow-x:auto;
 
 <tbody id="bodyTabel">
 <tr>
-<td colspan="12" style="text-align:center;padding:20px;">
-Belum ada data
-</td>
+<td colspan="14" style="text-align:center;padding:20px;">Belum ada data</td>
 </tr>
 </tbody>
 </table>
@@ -212,6 +222,7 @@ alert("Username / Password salah!");
 function masuk(){
 
 loginBox.style.display="none";
+laporanBox.style.display="block";
 
 if(role==="admin"){
 adminPanel.style.display="block";
@@ -229,7 +240,7 @@ localStorage.removeItem("role");
 location.reload();
 }
 
-// SAAT BUKA
+// LOAD AWAL
 window.onload=function(){
 
 let r = localStorage.getItem("role");
@@ -242,7 +253,7 @@ loadData();
 }
 }
 
-// UPLOAD CEPAT
+// UPLOAD SUPER CEPAT
 function uploadCSV(){
 
 let file = csvFile.files[0];
@@ -257,6 +268,7 @@ header:true,
 skipEmptyLines:true,
 worker:true,
 fastMode:true,
+dynamicTyping:true,
 
 complete:function(res){
 
@@ -282,10 +294,8 @@ function loadData(){
 let data = localStorage.getItem("tirtoData");
 
 if(data){
-
 globalData = JSON.parse(data);
 filteredData = globalData;
-
 isiKolektor();
 render(filteredData);
 }
@@ -314,39 +324,54 @@ let nama = filterKolektor.value;
 if(nama===""){
 filteredData = globalData;
 }else{
-filteredData =
-globalData.filter(x=>x["Kolektor"]===nama);
+filteredData = globalData.filter(x=>x["Kolektor"]===nama);
 }
 
 render(filteredData);
 }
 
-// RENDER CEPAT
+// RENDER TERCEPAT
 function render(data){
 
+let body = bodyTabel;
+
 if(data.length===0){
-bodyTabel.innerHTML =
-`<tr><td colspan="12">Belum ada data</td></tr>`;
+body.innerHTML =
+`<tr><td colspan="14">Belum ada data</td></tr>`;
 return;
 }
 
-let html="";
+let html = "";
+let lunas=0;
+let belum=0;
+let totalBayar=0;
 
-data.forEach((row,i)=>{
+for(let i=0;i<data.length;i++){
+
+let row = data[i];
+
+let tipe = row["Tipe"] || "Rumah Tangga";
 
 let lama = Number(row["Awal Meter"]||0);
 let sekarang = Number(row["Meter Sekarang"]||lama);
 
 let pakai = sekarang-lama;
-if(pakai<0)pakai=0;
+if(pakai<0) pakai=0;
 
-let tagihan = Number(row["Tagihan"]||0);
+let tarif = tipe==="Niaga" ? 800 : 500;
+
+let tagihan = pakai * tarif;
+
 let bayar = Number(row["Bayar"]||0);
 
-let sisa = tagihan-bayar;
+let sisa = tagihan - bayar;
 
-let status =
-sisa<=0 ? "Sudah Bayar":"Belum Bayar";
+let status = sisa<=0 ? "Sudah Bayar" : "Belum Bayar";
+
+if(status==="Sudah Bayar") lunas++;
+else belum++;
+
+totalBayar += bayar;
 
 html += `
 <tr>
@@ -355,22 +380,28 @@ html += `
 <td>${row["Alamat"]||""}</td>
 <td>${row["Blok"]||""}</td>
 <td>${row["Kolektor"]||""}</td>
+<td>${tipe}</td>
 <td>${lama}</td>
 <td>${sekarang}</td>
 <td>${pakai}</td>
+<td>${tarif}</td>
 <td>${tagihan}</td>
 <td class="${status==='Sudah Bayar'?'status-lunas':'status-belum'}">${status}</td>
 <td>${bayar}</td>
 <td>${sisa}</td>
-</tr>
-`;
-
-});
-
-bodyTabel.innerHTML = html;
+</tr>`;
 }
 
-// UBAH DATA
+body.innerHTML = html;
+
+// laporan
+jmlData.innerText = data.length;
+jmlLunas.innerText = lunas;
+jmlBelum.innerText = belum;
+totalBayar.innerText = "Rp"+totalBayar.toLocaleString("id-ID");
+}
+
+// EDIT
 function ubah(no,kolom,nilai){
 
 let index =
@@ -399,13 +430,13 @@ function cariData(){
 
 let key = cari.value.toLowerCase();
 
-filteredData =
-globalData.filter(x=>
+filteredData = globalData.filter(x=>
 
 (x["Konsumen"]||"").toLowerCase().includes(key) ||
 (x["Alamat"]||"").toLowerCase().includes(key) ||
 (x["Blok"]||"").toLowerCase().includes(key) ||
-(x["Kolektor"]||"").toLowerCase().includes(key)
+(x["Kolektor"]||"").toLowerCase().includes(key) ||
+(x["Tipe"]||"").toLowerCase().includes(key)
 
 );
 
@@ -432,13 +463,14 @@ link.download = "Data_Tagihan.csv";
 link.click();
 }
 
-// TEMPLATE CSV
+// TEMPLATE CEPAT
 function downloadTemplate(){
 
 let csv =
-`No,Konsumen,Alamat,Blok,Kolektor,Awal Meter,Meter Sekarang,Tagihan,Bayar
-1,Budi,Ngebruk,A1,Slamet,100,110,5000,0
-2,Siti,Ngebruk,A2,Rudi,80,95,7500,7500`;
+`No,Konsumen,Alamat,Blok,Kolektor,Tipe,Awal Meter,Meter Sekarang,Bayar
+1,Budi,Ngebruk,A1,Slamet,Rumah Tangga,100,120,10000
+2,Siti,Ngebruk,A2,Rudi,Niaga,50,70,16000
+3,Joko,Ngebruk,B1,Slamet,Rumah Tangga,90,100,5000`;
 
 let blob = new Blob([csv],{
 type:"text/csv;charset=utf-8;"
