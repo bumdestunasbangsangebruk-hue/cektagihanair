@@ -1,282 +1,177 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Tirto Langgeng</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tirto Langgeng - Portal Admin & Konsumen</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-
-<style>
-:root{
-    --primary:#0060B1;
-    --danger:#d63031;
-}
-
-body{
-    font-family:Arial, sans-serif;
-    background:#f4f7f6;
-    margin:0;
-    padding:15px;
-}
-
-.header{
-    background:var(--primary);
-    color:white;
-    text-align:center;
-    padding:20px;
-    border-radius:12px;
-}
-
-.card{
-    background:white;
-    padding:15px;
-    border-radius:12px;
-    margin-top:15px;
-    box-shadow:0 2px 6px rgba(0,0,0,.1);
-}
-
-button{
-    padding:10px 15px;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-    font-weight:bold;
-}
-
-.btn{
-    background:var(--primary);
-    color:white;
-}
-
-.danger{
-    background:var(--danger);
-    color:white;
-}
-
-.hidden{
-    display:none;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-}
-
-th,td{
-    padding:10px;
-    border-bottom:1px solid #ddd;
-    text-align:left;
-}
-
-th{
-    background:#f8f9fa;
-}
-</style>
+    <style>
+        :root { --primary: #0060B1; --wa: #25D366; }
+        body { font-family: sans-serif; background: #f4f7f6; margin: 0; padding: 10px; }
+        .header { background: var(--primary); color: white; padding: 20px; text-align: center; border-radius: 12px; }
+        .logo { height: 60px; background: white; padding: 5px; border-radius: 50%; margin-bottom: 10px;}
+        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-top: 15px; }
+        
+        /* PANEL ADMIN: Pastikan ID dan Style ini benar */
+        #adminPanel { 
+            display: none; 
+            background: #fff3cd !important; 
+            border: 2px dashed #ffc107; 
+            padding: 20px;
+        }
+        
+        input[type="text"] { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid var(--primary); box-sizing: border-box; }
+        .btn-login { background: #eee; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; float: right; cursor: pointer; }
+        .btn-export { background: #e67e22; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; margin-top: 10px; font-weight: bold; cursor: pointer;}
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; min-width: 800px; }
+        th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #f8f9fa; }
+        .status-lunas { color: green; font-weight: bold; }
+        .status-belum { color: red; font-weight: bold; }
+    </style>
 </head>
-
 <body>
 
-<button id="loginBtn" class="btn" onclick="login()">🔐 Admin Login</button>
+<button class="btn-login" onclick="login()">Admin Login</button>
 
 <div class="header">
-<h2>TIRTO LANGGENG</h2>
-<p>BUMDes Tunas Bangsa Ngebruk</p>
+    <img src="image_916921.png" alt="Logo" class="logo">
+    <h2 style="margin:0;">TIRTO LANGGENG</h2>
+    <p style="margin:0; font-size: 13px;">BUMDes Tunas Bangsa Ngebruk</p>
 </div>
 
-<!-- PANEL ADMIN -->
-<div id="adminPanel" class="card hidden">
-<h3>🔓 Mode Admin</h3>
-
-<input type="file" id="csvFile" accept=".csv"><br><br>
-
-<button class="btn" onclick="uploadCSV()">📤 Upload CSV</button>
-<button class="danger" onclick="deleteCSV()">🗑 Delete CSV</button>
-<button class="danger" onclick="logout()">🚪 Logout</button>
-
+<div id="adminPanel" class="card">
+    <h3 style="margin-top:0;">🔓 Mode Pengelola (Admin)</h3>
+    <label><b>Upload File CSV Terbaru:</b></label><br>
+    <input type="file" id="csvFile" accept=".csv" style="margin-top:10px;">
+    <button onclick="exportCSV()" class="btn-export">📥 Simpan & Download Hasil Tagihan</button>
+    <hr>
+    <button onclick="logout()" style="background:red; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Keluar / Logout</button>
 </div>
 
-<!-- TABEL -->
 <div class="card">
-<table>
-<thead>
-<tr>
-<th>No</th>
-<th>Konsumen</th>
-<th>Alamat</th>
-<th>Tagihan</th>
-</tr>
-</thead>
-<tbody id="bodyTabel">
-<tr>
-<td colspan="4" style="text-align:center;">Belum ada data</td>
-</tr>
-</tbody>
-</table>
+    <input type="text" id="cari" onkeyup="filterTabel()" placeholder="🔍 Cari Nama Pelanggan atau Alamat...">
+</div>
+
+<div class="card" style="overflow-x:auto;">
+    <table id="mainTable">
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>Konsumen</th>
+                <th>Alamat/Blok</th>
+                <th>Awal</th>
+                <th>Akhir</th>
+                <th>Tagihan</th>
+                <th>Status</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody id="bodyTabel">
+            <tr><td colspan="8" style="text-align:center; padding:20px;">Data kosong. Admin silakan login dan upload CSV.</td></tr>
+        </tbody>
+    </table>
 </div>
 
 <script>
-// =======================
-// FIREBASE CONFIG
-// =======================
-const firebaseConfig = {
-    apiKey: "ISI_APIKEY",
-    authDomain: "tirtolanggeng-39678.firebaseapp.com",
-    projectId: "tirtolanggeng-39678",
-    storageBucket: "tirtolanggeng-39678.appspot.com",
-    messagingSenderId: "391541384860",
-    appId: "1:391541384860:web:b4939f28f5adfa81a2ef59"
-};
+    // --- KONFIGURASI FIREBASE ---
+    // MASUKKAN KODE SULTAN DI SINI
+    const firebaseConfig = {
+        apiKey: "AIzaSyCjpsj8LuhYM2857QmL1kCp50Mwz6aPDFM",
+        authDomain: "tirtolanggeng-39678.firebaseapp.com",
+        projectId: "tirtolanggeng-39678",
+        storageBucket: "tirtolanggeng-39678.appspot.com",
+        messagingSenderId: "391541384860",
+        appId: "1:391541384860:web:b4939f28f5adfa81a2ef59"
+    };
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
+    // Inisialisasi
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
 
-// EMAIL ADMIN
-const ADMIN_EMAIL = "sulton.stsj@gmail.com";
-
-// DATA GLOBAL
-let globalData = [];
-
-// =======================
-// LOGIN
-// =======================
-function login(){
-    const provider = new firebase.auth.GoogleAuthProvider();
-
-    auth.signInWithPopup(provider)
-    .catch(err => alert(err.message));
-}
-
-// =======================
-// LOGOUT
-// =======================
-function logout(){
-    auth.signOut();
-}
-
-// =======================
-// CEK LOGIN
-// =======================
-auth.onAuthStateChanged(user => {
-
-    const panel = document.getElementById("adminPanel");
-    const btn = document.getElementById("loginBtn");
-
-    if(user){
-
-        if(user.email.toLowerCase() === ADMIN_EMAIL){
-            panel.classList.remove("hidden");
-            btn.classList.add("hidden");
-        }else{
-            alert("Bukan Admin!");
-            auth.signOut();
-        }
-
-    }else{
-        panel.classList.add("hidden");
-        btn.classList.remove("hidden");
+    // Login & Logout
+    function login() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider).catch(err => alert("Gagal: " + err.message));
     }
 
-});
-
-// =======================
-// UPLOAD CSV
-// =======================
-function uploadCSV(){
-
-    const file = document.getElementById("csvFile").files[0];
-
-    if(!file){
-        alert("Pilih file CSV dulu");
-        return;
+    function logout() {
+        auth.signOut().then(() => location.reload());
     }
 
-    Papa.parse(file,{
-        header:true,
-        skipEmptyLines:true,
-
-        complete:function(result){
-
-            globalData = result.data;
-
-            localStorage.setItem(
-                "tirto_csv",
-                JSON.stringify(globalData)
-            );
-
-            renderTable();
-
-            alert("CSV berhasil diupload");
+    // CEK STATUS LOGIN
+    auth.onAuthStateChanged(user => {
+        const panel = document.getElementById('adminPanel');
+        if (user) {
+            console.log("Login sebagai:", user.email);
+            // Sesuai permintaan Sultan, gunakan email ini
+            if (user.email.toLowerCase() === "sulton.stsj@gmail.com") {
+                panel.style.display = 'block';
+                alert("Selamat datang Admin: " + user.email);
+            } else {
+                alert("Akses Ditolak! Akun ini bukan admin.");
+                auth.signOut();
+            }
+        } else {
+            panel.style.display = 'none';
         }
     });
-}
 
-// =======================
-// DELETE CSV
-// =======================
-function deleteCSV(){
-
-    if(confirm("Yakin hapus data?")){
-
-        globalData = [];
-
-        localStorage.removeItem("tirto_csv");
-
-        renderTable();
-
-        alert("Data berhasil dihapus");
-    }
-}
-
-// =======================
-// TAMPILKAN TABEL
-// =======================
-function renderTable(){
-
-    const body = document.getElementById("bodyTabel");
-
-    if(globalData.length === 0){
-        body.innerHTML = `
-        <tr>
-        <td colspan="4" style="text-align:center;">
-        Belum ada data
-        </td>
-        </tr>`;
-        return;
-    }
-
-    body.innerHTML = "";
-
-    globalData.forEach((row,index)=>{
-
-        body.innerHTML += `
-        <tr>
-        <td>${row.No || index+1}</td>
-        <td>${row.Konsumen || ""}</td>
-        <td>${row.Alamat || ""}</td>
-        <td>Rp ${Number(row.Tagihan || 0).toLocaleString("id-ID")}</td>
-        </tr>
-        `;
+    // LOGIKA CSV
+    let globalData = [];
+    document.getElementById('csvFile').addEventListener('change', function(e) {
+        Papa.parse(e.target.files[0], {
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                globalData = results.data;
+                tampilkanData(globalData);
+            }
+        });
     });
 
-}
-
-// =======================
-// LOAD DATA SAAT BUKA
-// =======================
-window.onload = function(){
-
-    const data = localStorage.getItem("tirto_csv");
-
-    if(data){
-        globalData = JSON.parse(data);
+    function tampilkanData(data) {
+        const body = document.getElementById('bodyTabel');
+        body.innerHTML = '';
+        data.forEach((row, index) => {
+            if(!row["Konsumen"]) return;
+            const isLunas = (row["Status"] || "").toLowerCase() === "sudah bayar";
+            body.innerHTML += `
+                <tr>
+                    <td>${row["No"] || ""}</td>
+                    <td><b>${row["Konsumen"]}</b></td>
+                    <td>${row["Alamat"] || ""} ${row["Blok"] || ""}</td>
+                    <td>${row["Awal  Meter"]}</td>
+                    <td>${row["Akhir Meter"]}</td>
+                    <td>Rp ${parseInt(row["Tagihan"] || 0).toLocaleString('id-ID')}</td>
+                    <td class="${isLunas?'status-lunas':'status-belum'}">${row["Status"] || "Belum Bayar"}</td>
+                    <td>
+                        ${isLunas ? '✅' : `<a href="https://wa.me/?text=Tagihan%20Air%20${row['Konsumen']}" style="color:green; text-decoration:none; font-weight:bold;">Hubungi</a>`}
+                    </td>
+                </tr>
+            `;
+        });
     }
 
-    renderTable();
-}
+    function filterTabel() {
+        const key = document.getElementById('cari').value.toLowerCase();
+        tampilkanData(globalData.filter(i => i["Konsumen"].toLowerCase().includes(key) || (i["Alamat"] && i["Alamat"].toLowerCase().includes(key))));
+    }
 
+    function exportCSV() {
+        if(globalData.length === 0) return alert("Data kosong.");
+        const csv = Papa.unparse(globalData);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "Laporan_Tagihan_Update.csv";
+        link.click();
+    }
 </script>
 
 </body>
