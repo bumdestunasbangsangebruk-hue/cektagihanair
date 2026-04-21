@@ -2,165 +2,128 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tirto Langgeng - Portal Admin & Konsumen</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Tirto Langgeng Multi Login</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
 <style>
 :root{
-    --primary:#0060B1;
-    --wa:#25D366;
+--primary:#0060B1;
+--green:#27ae60;
+--red:#e74c3c;
+--orange:#e67e22;
 }
 
 body{
-    font-family:sans-serif;
-    background:#f4f7f6;
-    margin:0;
-    padding:10px;
+font-family:Arial,sans-serif;
+background:#f4f7f6;
+margin:0;
+padding:10px;
 }
 
 .header{
-    background:var(--primary);
-    color:white;
-    padding:20px;
-    text-align:center;
-    border-radius:12px;
-}
-
-.logo{
-    height:60px;
-    background:white;
-    padding:5px;
-    border-radius:50%;
-    margin-bottom:10px;
+background:var(--primary);
+color:white;
+padding:20px;
+text-align:center;
+border-radius:12px;
 }
 
 .card{
-    background:white;
-    padding:15px;
-    border-radius:10px;
-    box-shadow:0 2px 5px rgba(0,0,0,0.1);
-    margin-top:15px;
+background:white;
+padding:15px;
+border-radius:12px;
+margin-top:15px;
+box-shadow:0 2px 6px rgba(0,0,0,.1);
 }
 
-#adminPanel{
-    display:none;
-    background:#fff3cd;
-    border:2px dashed #ffc107;
-}
-
-input[type="text"],
-input[type="password"]{
-    width:100%;
-    padding:12px;
-    border-radius:8px;
-    border:2px solid var(--primary);
-    box-sizing:border-box;
-    margin-top:8px;
+input,button{
+padding:10px;
+border-radius:8px;
+border:1px solid #ccc;
+margin-top:5px;
+width:100%;
+box-sizing:border-box;
 }
 
 button{
-    border:none;
-    padding:12px;
-    border-radius:8px;
-    cursor:pointer;
-    font-weight:bold;
+border:none;
+font-weight:bold;
+cursor:pointer;
 }
 
-.btn-login{
-    background:#0060B1;
-    color:white;
-    width:100%;
-    margin-top:10px;
-}
+.btn{background:var(--primary);color:white;}
+.green{background:var(--green);color:white;}
+.red{background:var(--red);color:white;}
+.orange{background:var(--orange);color:white;}
 
-.btn-export{
-    background:#e67e22;
-    color:white;
-    width:100%;
-    margin-top:10px;
-}
-
-.btn-delete{
-    background:red;
-    color:white;
-    width:100%;
-    margin-top:10px;
-}
+.hidden{display:none;}
 
 table{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:10px;
-    font-size:13px;
-    min-width:800px;
+width:100%;
+border-collapse:collapse;
+font-size:13px;
+min-width:1200px;
 }
 
 th,td{
-    border-bottom:1px solid #ddd;
-    padding:10px;
-    text-align:left;
+padding:8px;
+border-bottom:1px solid #ddd;
+text-align:left;
 }
 
-th{
-    background:#f8f9fa;
-}
+th{background:#f8f9fa;}
 
-.status-lunas{
-    color:green;
-    font-weight:bold;
-}
-
-.status-belum{
-    color:red;
-    font-weight:bold;
-}
+.status-lunas{color:green;font-weight:bold;}
+.status-belum{color:red;font-weight:bold;}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN MANUAL -->
+<!-- LOGIN -->
 <div class="card" id="loginBox">
-<h3>🔐 Login Admin</h3>
+<h3>🔐 Login Sistem</h3>
 
 <input type="text" id="username" placeholder="Username">
 <input type="password" id="password" placeholder="Password">
 
-<button class="btn-login" onclick="login()">Login</button>
+<button class="btn" onclick="login()">Login</button>
+
+<p>
+Admin = Admin / Tun@s123<br>
+Kolektor = kolektor / bpsab123
+</p>
 </div>
 
 <!-- HEADER -->
 <div class="header">
-<img src="image_916921.png" class="logo">
-<h2 style="margin:0;">TIRTO LANGGENG</h2>
-<p style="margin:0;font-size:13px;">BUMDes Tunas Bangsa Ngebruk</p>
+<h2 style="margin:0">TIRTO LANGGENG</h2>
+<p style="margin:0">BUMDes Tunas Bangsa Ngebruk</p>
 </div>
 
 <!-- ADMIN PANEL -->
-<div id="adminPanel" class="card">
-<h3>🔓 Mode Pengelola (Admin)</h3>
+<div class="card hidden" id="adminPanel">
+<h3>🔓 Mode Admin</h3>
 
-<label><b>Upload File CSV:</b></label>
 <input type="file" id="csvFile" accept=".csv">
+<button class="btn" onclick="uploadCSV()">Upload CSV</button>
+<button class="orange" onclick="downloadCSV()">Download CSV</button>
+<button class="red" onclick="hapusCSV()">Delete CSV</button>
+<button class="red" onclick="logout()">Logout</button>
+</div>
 
-<button onclick="exportCSV()" class="btn-export">
-📥 Download CSV
-</button>
-
-<button onclick="deleteCSV()" class="btn-delete">
-🗑 Delete CSV
-</button>
-
-<button onclick="logout()" class="btn-delete">
-🚪 Logout
-</button>
+<!-- KOLEKTOR PANEL -->
+<div class="card hidden" id="kolektorPanel">
+<h3>💰 Mode Kolektor</h3>
+<button class="green" onclick="simpanPerubahan()">💾 Simpan Perubahan</button>
+<button class="red" onclick="logout()">Logout</button>
 </div>
 
 <!-- SEARCH -->
 <div class="card">
-<input type="text" id="cari" onkeyup="filterTabel()" placeholder="🔍 Cari Nama / Alamat">
+<input type="text" id="cari" placeholder="Cari pelanggan..." onkeyup="filterTabel()">
 </div>
 
 <!-- TABLE -->
@@ -171,18 +134,20 @@ th{
 <th>No</th>
 <th>Konsumen</th>
 <th>Alamat</th>
+<th>Blok</th>
 <th>Awal</th>
 <th>Akhir</th>
 <th>Tagihan</th>
 <th>Status</th>
-<th>Aksi</th>
+<th>Bayar</th>
+<th>Sisa</th>
 </tr>
 </thead>
 
 <tbody id="bodyTabel">
 <tr>
-<td colspan="8" style="text-align:center;padding:20px;">
-Data kosong. Login admin lalu upload CSV.
+<td colspan="10" style="text-align:center;padding:20px;">
+Belum ada data
 </td>
 </tr>
 </tbody>
@@ -190,181 +155,255 @@ Data kosong. Login admin lalu upload CSV.
 </div>
 
 <script>
-// =======================
-// LOGIN MANUAL
-// =======================
-function login(){
-
-    let user = document.getElementById("username").value;
-    let pass = document.getElementById("password").value;
-
-    if(user === "Admin" && pass === "Tun@s123"){
-
-        localStorage.setItem("isLogin","true");
-
-        document.getElementById("loginBox").style.display="none";
-        document.getElementById("adminPanel").style.display="block";
-
-        alert("Login berhasil");
-
-    }else{
-        alert("Username / Password salah!");
-    }
-}
-
-// =======================
-// LOGOUT
-// =======================
-function logout(){
-
-    localStorage.removeItem("isLogin");
-
-    location.reload();
-}
-
-// =======================
-// AUTO LOGIN CHECK
-// =======================
-window.onload = function(){
-
-    if(localStorage.getItem("isLogin") === "true"){
-        document.getElementById("loginBox").style.display="none";
-        document.getElementById("adminPanel").style.display="block";
-    }
-
-    const saved = localStorage.getItem("csvData");
-
-    if(saved){
-        globalData = JSON.parse(saved);
-        tampilkanData(globalData);
-    }
-}
-
-// =======================
-// CSV
-// =======================
+let role = "";
 let globalData = [];
 
-document.getElementById("csvFile").addEventListener("change", function(e){
+// ================= LOGIN =================
+function login(){
 
-    Papa.parse(e.target.files[0],{
-        header:true,
-        skipEmptyLines:true,
+let u = document.getElementById("username").value;
+let p = document.getElementById("password").value;
 
-        complete:function(results){
+if(u==="Admin" && p==="Tun@s123"){
+role="admin";
+localStorage.setItem("role","admin");
+masuk();
+}
+else if(u==="kolektor" && p==="bpsab123"){
+role="kolektor";
+localStorage.setItem("role","kolektor");
+masuk();
+}
+else{
+alert("Login salah!");
+}
+}
 
-            globalData = results.data;
+function masuk(){
 
-            localStorage.setItem(
-                "csvData",
-                JSON.stringify(globalData)
-            );
+document.getElementById("loginBox").style.display="none";
 
-            tampilkanData(globalData);
+if(role==="admin"){
+document.getElementById("adminPanel").style.display="block";
+}
 
-            alert("CSV berhasil diupload");
-        }
-    });
+if(role==="kolektor"){
+document.getElementById("kolektorPanel").style.display="block";
+}
+
+loadData();
+}
+
+function logout(){
+localStorage.removeItem("role");
+location.reload();
+}
+
+// ================= AUTO LOGIN =================
+window.onload=function(){
+
+let r = localStorage.getItem("role");
+
+if(r){
+role=r;
+masuk();
+}else{
+loadData();
+}
+}
+
+// ================= CSV =================
+function uploadCSV(){
+
+let file = document.getElementById("csvFile").files[0];
+
+if(!file){
+alert("Pilih file CSV");
+return;
+}
+
+Papa.parse(file,{
+header:true,
+skipEmptyLines:true,
+
+complete:function(res){
+
+globalData = res.data;
+
+localStorage.setItem(
+"tirtoData",
+JSON.stringify(globalData)
+);
+
+render(globalData);
+
+alert("Upload berhasil");
+}
+});
+}
+
+function loadData(){
+
+let data = localStorage.getItem("tirtoData");
+
+if(data){
+globalData = JSON.parse(data);
+render(globalData);
+}
+}
+
+function downloadCSV(){
+
+if(globalData.length===0){
+alert("Data kosong");
+return;
+}
+
+let csv = Papa.unparse(globalData);
+
+let blob = new Blob([csv],{
+type:"text/csv;charset=utf-8;"
 });
 
-// =======================
-// TABEL
-// =======================
-function tampilkanData(data){
+let link = document.createElement("a");
 
-    const body = document.getElementById("bodyTabel");
-
-    body.innerHTML = "";
-
-    data.forEach(row=>{
-
-        if(!row["Konsumen"]) return;
-
-        let isLunas =
-        (row["Status"] || "").toLowerCase()
-        === "sudah bayar";
-
-        body.innerHTML += `
-        <tr>
-            <td>${row["No"] || ""}</td>
-            <td><b>${row["Konsumen"]}</b></td>
-            <td>${row["Alamat"] || ""}</td>
-            <td>${row["Awal  Meter"] || ""}</td>
-            <td>${row["Akhir Meter"] || ""}</td>
-            <td>Rp ${parseInt(row["Tagihan"] || 0).toLocaleString('id-ID')}</td>
-            <td class="${isLunas ? 'status-lunas':'status-belum'}">
-                ${row["Status"] || "Belum Bayar"}
-            </td>
-            <td>
-                ${isLunas ? '✅' :
-                `<a href="https://wa.me/?text=Tagihan Air ${row["Konsumen"]}" target="_blank">Hubungi</a>`}
-            </td>
-        </tr>
-        `;
-    });
+link.href = URL.createObjectURL(blob);
+link.download = "Tagihan.csv";
+link.click();
 }
 
-// =======================
-// FILTER
-// =======================
+function hapusCSV(){
+
+if(confirm("Hapus semua data?")){
+
+globalData = [];
+localStorage.removeItem("tirtoData");
+render([]);
+}
+}
+
+// ================= RENDER =================
+function render(data){
+
+let body = document.getElementById("bodyTabel");
+
+if(data.length===0){
+body.innerHTML=`
+<tr>
+<td colspan="10" style="text-align:center">
+Belum ada data
+</td>
+</tr>`;
+return;
+}
+
+body.innerHTML="";
+
+data.forEach((row,i)=>{
+
+let tagihan = Number(row["Tagihan"] || 0);
+let bayar = Number(row["Bayar"] || 0);
+let sisa = tagihan - bayar;
+
+let status = sisa<=0 ? "Sudah Bayar" : "Belum Bayar";
+
+if(role==="kolektor"){
+
+body.innerHTML += `
+<tr>
+<td>${row["No"] || i+1}</td>
+<td>${row["Konsumen"] || ""}</td>
+
+<td>
+<input value="${row["Alamat"] || ""}"
+onchange="ubah(${i},'Alamat',this.value)">
+</td>
+
+<td>
+<input value="${row["Blok"] || ""}"
+onchange="ubah(${i},'Blok',this.value)">
+</td>
+
+<td>${row["Awal  Meter"] || ""}</td>
+<td>${row["Akhir Meter"] || ""}</td>
+<td>${tagihan}</td>
+
+<td class="${status==='Sudah Bayar'?'status-lunas':'status-belum'}">
+${status}
+</td>
+
+<td>
+<input type="number"
+value="${bayar}"
+onchange="ubah(${i},'Bayar',this.value)">
+</td>
+
+<td>${sisa}</td>
+</tr>
+`;
+}
+else{
+
+body.innerHTML += `
+<tr>
+<td>${row["No"] || i+1}</td>
+<td>${row["Konsumen"] || ""}</td>
+<td>${row["Alamat"] || ""}</td>
+<td>${row["Blok"] || ""}</td>
+<td>${row["Awal  Meter"] || ""}</td>
+<td>${row["Akhir Meter"] || ""}</td>
+<td>${tagihan}</td>
+<td class="${status==='Sudah Bayar'?'status-lunas':'status-belum'}">
+${status}
+</td>
+<td>${bayar}</td>
+<td>${sisa}</td>
+</tr>
+`;
+}
+
+});
+}
+
+// ================= EDIT =================
+function ubah(index,kolom,nilai){
+
+globalData[index][kolom] = nilai;
+}
+
+// ================= SIMPAN =================
+function simpanPerubahan(){
+
+localStorage.setItem(
+"tirtoData",
+JSON.stringify(globalData)
+);
+
+render(globalData);
+
+alert("Perubahan berhasil disimpan");
+}
+
+// ================= FILTER =================
 function filterTabel(){
 
-    let key =
-    document.getElementById("cari")
-    .value.toLowerCase();
+let key = document.getElementById("cari")
+.value.toLowerCase();
 
-    let hasil = globalData.filter(i =>
-        (i["Konsumen"] || "")
-        .toLowerCase()
-        .includes(key)
-        ||
-        (i["Alamat"] || "")
-        .toLowerCase()
-        .includes(key)
-    );
+let hasil = globalData.filter(x=>
 
-    tampilkanData(hasil);
-}
+(x["Konsumen"] || "")
+.toLowerCase()
+.includes(key)
 
-// =======================
-// DOWNLOAD CSV
-// =======================
-function exportCSV(){
+||
 
-    if(globalData.length === 0){
-        alert("Data kosong");
-        return;
-    }
+(x["Alamat"] || "")
+.toLowerCase()
+.includes(key)
+);
 
-    let csv = Papa.unparse(globalData);
-
-    let blob = new Blob(
-        [csv],
-        {type:'text/csv;charset=utf-8;'}
-    );
-
-    let link = document.createElement("a");
-
-    link.href = URL.createObjectURL(blob);
-    link.download = "Laporan_Tagihan.csv";
-    link.click();
-}
-
-// =======================
-// DELETE CSV
-// =======================
-function deleteCSV(){
-
-    if(confirm("Yakin hapus data CSV?")){
-
-        globalData = [];
-
-        localStorage.removeItem("csvData");
-
-        tampilkanData([]);
-
-        alert("Data berhasil dihapus");
-    }
+render(hasil);
 }
 </script>
 
