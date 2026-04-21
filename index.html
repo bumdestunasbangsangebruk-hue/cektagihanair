@@ -24,7 +24,13 @@
         .card { background: white; padding: 18px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; }
         
         /* Admin Panel */
-        #adminPanel { display: none; background: #fff9e6; border: 2px dashed #f1c40f; }
+        #adminPanel { 
+    display: none; /* Awalnya sembunyi */
+    background: #fff9e6; 
+    border: 2px dashed #f1c40f; 
+    padding: 15px;
+    border-radius: 10px;
+}
         
         /* Form Elements */
         label { font-weight: bold; color: var(--primary); display: block; margin-bottom: 8px; }
@@ -149,15 +155,13 @@ auth.getRedirectResult().then((result) => {
     const panel = document.getElementById('adminPanel');
     
     if (user) {
-        console.log("Email yang login:", user.email); // Cek di console log
-        
-        // Pastikan email benar-benar sama persis
+        // Ganti email di bawah ini agar sesuai dengan yang terdaftar di Firebase
         if (user.email.toLowerCase() === "sulton.stsj@gmail.com") {
             panel.style.display = 'block'; 
             tampilkanData(globalData); 
-            alert("Admin Terdeteksi: Panel Upload Aktif");
+            console.log("Admin berhasil masuk!");
         } else {
-            alert("Maaf, email " + user.email + " tidak memiliki akses Admin.");
+            alert("Akses Ditolak! Akun " + user.email + " bukan Admin.");
             auth.signOut();
         }
     } else {
