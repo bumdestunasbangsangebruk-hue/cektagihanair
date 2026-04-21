@@ -145,16 +145,25 @@ auth.getRedirectResult().then((result) => {
     }
 
     // Cek Login Admin
-    auth.onAuthStateChanged(user => {
-        const panel = document.getElementById('adminPanel');
-        if (user && user.email === "bumdestunasbangsangebruk@gmail.com") {
-            panel.style.display = 'block';
+   auth.onAuthStateChanged(user => {
+    const panel = document.getElementById('adminPanel');
+    
+    if (user) {
+        console.log("Email yang login:", user.email); // Cek di console log
+        
+        // Pastikan email benar-benar sama persis
+        if (user.email.toLowerCase() === "bumdestunasbangsangebruk@gmail.com") {
+            panel.style.display = 'block'; 
             tampilkanData(globalData); 
-        } else if (user) {
-            alert("Akses Ditolak! Hanya akun BUMDes yang diizinkan.");
+            alert("Admin Terdeteksi: Panel Upload Aktif");
+        } else {
+            alert("Maaf, email " + user.email + " tidak memiliki akses Admin.");
             auth.signOut();
         }
-    });
+    } else {
+        panel.style.display = 'none';
+    }
+});
 
     let globalData = [];
 
