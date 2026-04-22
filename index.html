@@ -156,45 +156,8 @@ overflow-x:auto;
 <!-- TABLE -->
 <div class="card wrap">
 <table>
-<thead id="tableHead"></thead>
-function setHeader(){
+<thead>
 
-if(role===""){
-
-tableHead.innerHTML = `
-<tr>
-<th>No</th>
-<th>Konsumen</th>
-<th>Alamat</th>
-<th>Blok</th>
-<th>Tipe</th>
-<th>Pemakaian</th>
-<th>Tagihan</th>
-<th>Status</th>
-</tr>
-`;
-
-}else{
-
-tableHead.innerHTML = `
-<tr>
-<th>No</th>
-<th>Konsumen</th>
-<th>Alamat</th>
-<th>Blok</th>
-<th>Kolektor</th>
-<th>Meter Awal</th>
-<th>Meter Akhir</th>
-<th>Pemakaian</th>
-<th>Tagihan</th>
-<th>Status</th>
-<th>Bayar</th>
-<th>Sisa</th>
-</tr>
-`;
-
-}
-}
 <tr>
 <th>No</th>
 <th>Konsumen</th>
