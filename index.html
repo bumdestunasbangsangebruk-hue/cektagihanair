@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>TIRTO LANGGENG PRO MAX</title>
+<title>Tirto Langgeng</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
@@ -31,8 +31,8 @@ border-radius:12px;
 }
 
 .logo{
-width:75px;
-height:75px;
+width:70px;
+height:70px;
 object-fit:contain;
 background:white;
 padding:6px;
@@ -47,25 +47,6 @@ border-radius:12px;
 margin-top:15px;
 box-shadow:0 2px 6px rgba(0,0,0,.1);
 }
-
-.grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-gap:10px;
-}
-
-.box{
-padding:12px;
-border-radius:10px;
-color:white;
-font-weight:bold;
-text-align:center;
-}
-
-.blue{background:#3498db;}
-.green{background:#27ae60;}
-.red{background:#e74c3c;}
-.orange{background:#e67e22;}
 
 input,select,button{
 width:100%;
@@ -83,13 +64,17 @@ cursor:pointer;
 }
 
 .btn{background:var(--primary);color:white;}
+.green{background:var(--green);color:white;}
+.red{background:var(--red);color:white;}
+.orange{background:var(--orange);color:white;}
+
 .hidden{display:none;}
 
 table{
 width:100%;
 border-collapse:collapse;
 font-size:13px;
-min-width:2000px;
+min-width:1900px;
 }
 
 th,td{
@@ -112,8 +97,10 @@ th{background:#f8f9fa;}
 <!-- LOGIN -->
 <div class="card" id="loginBox">
 <h3>🔐 Login Sistem</h3>
+
 <input type="text" id="username" placeholder="Username">
 <input type="password" id="password" placeholder="Password">
+
 <button class="btn" onclick="login()">Login</button>
 </div>
 
@@ -124,41 +111,34 @@ th{background:#f8f9fa;}
 <p>BUMDes Tirto Langgeng Desa Ngebruk</p>
 </div>
 
-<!-- DASHBOARD -->
-<div class="card hidden" id="dashBox">
-<div class="grid">
-<div class="box blue">Total<br><span id="dTotal">0</span></div>
-<div class="box green">Lunas<br><span id="dLunas">0</span></div>
-<div class="box red">Belum<br><span id="dBelum">0</span></div>
-<div class="box orange">Masuk<br><span id="dMasuk">Rp0</span></div>
-<div class="box blue">Tunggakan<br><span id="dTunggakan">Rp0</span></div>
-</div>
-</div>
-
 <!-- ADMIN -->
 <div class="card hidden" id="adminPanel">
 <h3>🔓 Admin Panel</h3>
+
 <input type="file" id="csvFile" accept=".csv">
+
 <button class="btn" onclick="uploadCSV()">Upload CSV</button>
-<button class="btn" onclick="downloadTemplate()">Template CSV</button>
-<button class="btn" onclick="downloadCSV()">Export CSV</button>
-<button class="btn" onclick="hapus()">Hapus Data</button>
-<button class="btn" onclick="logout()">Logout</button>
+<button class="orange" onclick="downloadTemplate()">Template CSV</button>
+<button class="orange" onclick="downloadCSV()">Download CSV</button>
+<button class="red" onclick="hapusCSV()">Hapus Data</button>
+<button class="red" onclick="logout()">Logout</button>
 </div>
 
 <!-- KOLEKTOR -->
 <div class="card hidden" id="kolektorPanel">
 <h3>💰 Kolektor Panel</h3>
-<select id="filter" onchange="filterKolektor()">
+
+<select id="filterKolektor" onchange="filterByKolektor()">
 <option value="">-- Pilih Kolektor --</option>
 </select>
-<button class="btn" onclick="save()">Simpan</button>
-<button class="btn" onclick="logout()">Logout</button>
+
+<button class="green" onclick="simpan()">💾 Simpan Perubahan</button>
+<button class="red" onclick="logout()">Logout</button>
 </div>
 
 <!-- SEARCH -->
 <div class="card">
-<input id="search" placeholder="Cari data..." onkeyup="cari()">
+<input type="text" id="cari" placeholder="Cari..." onkeyup="cari()">
 </div>
 
 <!-- TABLE -->
@@ -189,46 +169,46 @@ th{background:#f8f9fa;}
 
 <script>
 
-let data=[];
-let role="";
+let data = [];
+let role = "";
 
-/* ================= LOGIN ================= */
+// LOGIN
 function login(){
 
-let u=username.value;
-let p=password.value;
+let u = username.value;
+let p = password.value;
 
 if(u==="Admin" && p==="Tun@s123"){
 role="admin";
-start();
+masuk();
 }
 else if(u==="kolektor" && p==="bpsab123"){
 role="kolektor";
-start();
+masuk();
 }
-else alert("Login salah");
+else{
+alert("Login salah");
+}
 }
 
-function start(){
+function masuk(){
 loginBox.style.display="none";
-dashBox.style.display="block";
-adminPanel.style.display="block";
 load();
 }
 
-/* ================= LOAD ================= */
+// LOAD
 function load(){
-let d=localStorage.getItem("tirto");
+let d = localStorage.getItem("tirto");
 if(d){
-data=JSON.parse(d);
+data = JSON.parse(d);
 render(data);
 }
 }
 
-/* ================= UPLOAD CEPAT ================= */
+// UPLOAD CEPAT
 function uploadCSV(){
 
-let file=csvFile.files[0];
+let file = csvFile.files[0];
 if(!file)return alert("Pilih file");
 
 Papa.parse(file,{
@@ -238,71 +218,71 @@ worker:true,
 fastMode:true,
 
 complete:function(res){
-data=res.data;
-saveLocal();
+
+data = res.data;
+localStorage.setItem("tirto",JSON.stringify(data));
 render(data);
+
 alert("Upload sukses");
 }
 });
 }
 
-/* ================= SAVE ================= */
-function saveLocal(){
-localStorage.setItem("tirto",JSON.stringify(data));
+// FILTER KOLEKTOR
+function filterByKolektor(){
+
+let v = filterKolektor.value;
+
+if(v==="") render(data);
+else render(data.filter(x=>x.Kolektor===v));
 }
 
-/* ================= DASHBOARD ================= */
-function dash(rows){
-
-let t=rows.length,l=0,b=0,m=0,tg=0;
-
-rows.forEach(r=>{
-
-let a=+r["Awal Meter"]||0;
-let s=+r["Meter Sekarang"]||a;
-let p=s-a;if(p<0)p=0;
-
-let tpf=r["Tipe"]==="Niaga"?800:500;
-let tag=p*tpf;
-
-let by=+r["Bayar"]||0;
-let sisa=tag-by;
-
-m+=by;tg+=sisa;
-if(sisa<=0)l++;else b++;
-
-});
-
-dTotal.innerText=t;
-dLunas.innerText=l;
-dBelum.innerText=b;
-dMasuk.innerText="Rp"+m.toLocaleString();
-dTunggakan.innerText="Rp"+tg.toLocaleString();
-
-}
-
-/* ================= RENDER SUPER CEPAT ================= */
+// RENDER SUPER CEPAT
 function render(rows){
 
 let html="";
 
+let lunas=0;
+let belum=0;
+
 rows.forEach((r,i)=>{
 
-let a=+r["Awal Meter"]||0;
-let s=+r["Meter Sekarang"]||a;
+let lama = Number(r["Awal Meter"]||0);
+let sekarang = Number(r["Meter Sekarang"]||lama);
 
-let p=s-a;if(p<0)p=0;
+let pakai = sekarang-lama;
+if(pakai<0) pakai=0;
 
-let tipe=r["Tipe"]||"Rumah Tangga";
-let tarif=tipe==="Niaga"?800:500;
+let tipe = r["Tipe"]||"Rumah Tangga";
+let tarif = tipe==="Niaga"?800:500;
 
-let tag=p*tarif;
-let by=+r["Bayar"]||0;
-let sisa=tag-by;
+let tagihan = pakai*tarif;
+let bayar = Number(r["Bayar"]||0);
+let sisa = tagihan-bayar;
 
-let st=sisa<=0?"Lunas":"Belum";
+let status = sisa<=0?"Lunas":"Belum";
 
-html+=`
+if(status==="Lunas") lunas++;
+else belum++;
+
+let inputMeter = role==="kolektor"
+? `<input type="number" value="${sekarang}" onchange="edit(${i},'Meter Sekarang',this.value)">`
+: sekarang;
+
+let editMode = role==="kolektor"
+? `
+<input value="${r["Nama"]||""}" onchange="edit(${i},'Nama',this.value)">
+<input value="${r["Alamat"]||""}" onchange="edit(${i},'Alamat',this.value)">
+<input value="${r["Blok"]||""}" onchange="edit(${i},'Blok',this.value)">
+<select onchange="edit(${i},'Tipe',this.value)">
+<option ${tipe==="Rumah Tangga"?"selected":""}>Rumah Tangga</option>
+<option ${tipe==="Niaga"?"selected":""}>Niaga</option>
+</select>
+<input type="number" value="${bayar}" onchange="edit(${i},'Bayar',this.value)">
+`
+: "";
+
+html += `
 <tr>
 <td>${i+1}</td>
 <td>${r["Nama"]||""}</td>
@@ -310,95 +290,77 @@ html+=`
 <td>${r["Blok"]||""}</td>
 <td>${r["Kolektor"]||""}</td>
 <td>${tipe}</td>
-<td>${a}</td>
-<td>${s}</td>
-<td>${p}</td>
+<td>${lama}</td>
+<td>${sekarang}</td>
+<td>${pakai}</td>
 <td>${tarif}</td>
-<td>${tag}</td>
-<td class="${st=='Lunas'?'status-lunas':'status-belum'}">${st}</td>
-<td>${by}</td>
+<td>${tagihan}</td>
+<td>${status}</td>
+<td>${bayar}</td>
 <td>${sisa}</td>
-<td>${role=="kolektor"
-?`<input value="${s}" onchange="edit(${i},'Meter Sekarang',this.value)">`
-:s}</td>
+<td>${inputMeter}</td>
 </tr>
 `;
-
 });
 
-tabel.innerHTML=html;
-
-dash(rows);
-
+tabel.innerHTML = html;
 }
 
-/* ================= EDIT ================= */
-function edit(i,k,v){
-data[i][k]=v;
-saveLocal();
+// EDIT
+function edit(i,key,val){
+data[i][key]=val;
 }
 
-/* ================= SAVE ================= */
-function save(){
-saveLocal();
+// SIMPAN
+function simpan(){
+localStorage.setItem("tirto",JSON.stringify(data));
 alert("Tersimpan");
 render(data);
 }
 
-/* ================= SEARCH ================= */
+// SEARCH
 function cari(){
 
-let k=search.value.toLowerCase();
+let k = cari.value.toLowerCase();
 
 render(data.filter(x=>
 (x.Nama||"").toLowerCase().includes(k)||
 (x.Alamat||"").toLowerCase().includes(k)||
-(x.Blok||"").toLowerCase().includes(k)||
-(x.Kolektor||"").toLowerCase().includes(k)
+(x.Blok||"").toLowerCase().includes(k)
 ));
-
 }
 
-/* ================= TEMPLATE ================= */
+// TEMPLATE
 function downloadTemplate(){
 
-let c=
+let csv =
 `Nama,Alamat,Blok,Kolektor,Tipe,Awal Meter,Meter Sekarang,Bayar
-Budi,Ngebruk,A1,Slamet,Rumah Tangga,100,120,10000`;
+Budi,Ngebruk,A1,Slamet,Rumah Tangga,100,120,10000
+Siti,Ngebruk,A2,Rudi,Niaga,50,70,20000`;
 
-let b=new Blob([c],{type:"text/csv"});
+let blob = new Blob([csv],{type:"text/csv"});
 let a=document.createElement("a");
-a.href=URL.createObjectURL(b);
+a.href=URL.createObjectURL(blob);
 a.download="template.csv";
 a.click();
-
 }
 
-/* ================= EXPORT ================= */
+// DOWNLOAD
 function downloadCSV(){
-let c=Papa.unparse(data);
-let b=new Blob([c],{type:"text/csv"});
+let csv = Papa.unparse(data);
+let blob=new Blob([csv],{type:"text/csv"});
 let a=document.createElement("a");
-a.href=URL.createObjectURL(b);
+a.href=URL.createObjectURL(blob);
 a.download="data.csv";
 a.click();
 }
 
-/* ================= DELETE ================= */
-function hapus(){
+// HAPUS
+function hapusCSV(){
 if(confirm("Hapus semua data?")){
 data=[];
-saveLocal();
+localStorage.removeItem("tirto");
 render([]);
-}
-}
-
-/* ================= INIT ================= */
-window.onload=()=>{
-let d=localStorage.getItem("tirto");
-if(d){
-data=JSON.parse(d);
-render(data);
 }
 }
 
