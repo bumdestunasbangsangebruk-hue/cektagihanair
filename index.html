@@ -163,8 +163,8 @@ overflow-x:auto;
 <th>Alamat</th>
 <th>Blok</th>
 <th>Kolektor</th>
-<th>Meter Lama</th>
-<th>Meter Sekarang</th>
+<th>Meter Awal</th>
+<th>Meter Akhir</th>
 <th>Pemakaian</th>
 <th>Tagihan</th>
 <th>Status</th>
@@ -334,8 +334,8 @@ let html="";
 
 data.forEach((row,i)=>{
 
-let lama = Number(row["Awal Meter"]||0);
-let sekarang = Number(row["Meter Sekarang"]||lama);
+let lama = Number(row["Meter Awal"]||0);
+let sekarang = Number(row["Meter Akhir"]||lama);
 
 let pakai = sekarang-lama;
 if(pakai<0)pakai=0;
