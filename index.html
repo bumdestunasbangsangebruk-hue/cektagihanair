@@ -252,7 +252,7 @@ alert("Username / Password salah!");
 }
 
 function masuk(){
-
+setHeader();
 loginBox.style.display="none";
 
 if(role==="admin"){
@@ -273,6 +273,7 @@ location.reload();
 
 // SAAT BUKA
 window.onload=function(){
+setHeader();
 
 let r = localStorage.getItem("role");
 
