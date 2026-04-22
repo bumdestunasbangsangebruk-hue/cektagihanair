@@ -340,8 +340,8 @@ let html="";
 
 data.forEach((row,i)=>{
 
-let lama = Number(row["Meter Awal"]||0);
-let sekarang = Number(row["Meter Akhir"]||lama);
+let lama = Number(row["Awal Meter"]||0);
+let sekarang = Number(row["Meter Sekarang"]||lama);
 
 let pakai = sekarang-lama;
 if(pakai<0)pakai=0;
@@ -353,31 +353,6 @@ let sisa = tagihan-bayar;
 
 let status =
 sisa<=0 ? "Sudah Bayar":"Belum Bayar";
-
-// ==========================
-// MODE PUBLIK (tanpa login)
-// ==========================
-if(role===""){
-
-html += `
-<tr>
-<td>${row["No"]||i+1}</td>
-<td>${row["Konsumen"]||""}</td>
-<td>${row["Alamat"]||""}</td>
-<td>${row["Blok"]||""}</td>
-<td>${row["Tipe"]||""}</td>
-<td>${pakai}</td>
-<td>${tagihan}</td>
-<td class="${status==='Sudah Bayar'?'status-lunas':'status-belum'}">${status}</td>
-</tr>
-`;
-
-}
-
-// ==========================
-// MODE LOGIN (ADMIN / KOLEKTOR)
-// ==========================
-else{
 
 html += `
 <tr>
@@ -396,13 +371,11 @@ html += `
 </tr>
 `;
 
-}
-
 });
 
 bodyTabel.innerHTML = html;
 }
-}
+
 
 // UBAH DATA
 function ubah(no,kolom,nilai){
