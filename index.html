@@ -238,13 +238,13 @@ if(user==="Admin" && pass==="1234"){
 role="admin";
 localStorage.setItem("role","admin");
 masuk();
-setHeader();
+
 }
 else if(user==="kolektor" && pass==="1234"){
 role="kolektor";
 localStorage.setItem("role","kolektor");
 masuk();
-setHeader();
+
 }
 else{
 alert("Username / Password salah!");
@@ -252,7 +252,7 @@ alert("Username / Password salah!");
 }
 
 function masuk(){
-setHeader();
+
 loginBox.style.display="none";
 
 if(role==="admin"){
