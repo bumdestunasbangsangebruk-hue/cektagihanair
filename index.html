@@ -350,6 +350,31 @@ let sisa = tagihan-bayar;
 let status =
 sisa<=0 ? "Sudah Bayar":"Belum Bayar";
 
+// ==========================
+// MODE PUBLIK (tanpa login)
+// ==========================
+if(role===""){
+
+html += `
+<tr>
+<td>${row["No"]||i+1}</td>
+<td>${row["Konsumen"]||""}</td>
+<td>${row["Alamat"]||""}</td>
+<td>${row["Blok"]||""}</td>
+<td>${row["Tipe"]||""}</td>
+<td>${pakai}</td>
+<td>${tagihan}</td>
+<td class="${status==='Sudah Bayar'?'status-lunas':'status-belum'}">${status}</td>
+</tr>
+`;
+
+}
+
+// ==========================
+// MODE LOGIN (ADMIN / KOLEKTOR)
+// ==========================
+else{
+
 html += `
 <tr>
 <td>${row["No"]||i+1}</td>
@@ -367,9 +392,12 @@ html += `
 </tr>
 `;
 
+}
+
 });
 
 bodyTabel.innerHTML = html;
+}
 }
 
 // UBAH DATA
