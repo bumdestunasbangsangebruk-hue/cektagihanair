@@ -411,19 +411,8 @@ let sisa = tagihan - bayar;
 let status = sisa <= 0 ? "Sudah Bayar" : "Belum Bayar";
 let klsStatus = sisa <= 0 ? "status-lunas" : "status-belum";
 }
-
-// 🔥 HITUNG TAGIHAN
-let tagihan = pakai * tarif;
-} 
-else if (tipe === "niaga") {
-    tarif = 800;
-} 
-else if (tipe === "sosial") {
-    tarif = 0;
-}
-
 // hitung otomatis tagihan
-let tagihan = pakai * tarif;
+
         let bayar = Number(row["Bayar"] || 0);
         let sisa = tagihan - bayar;
         let status = sisa <= 0 ? "Sudah Bayar" : "Belum Bayar";
