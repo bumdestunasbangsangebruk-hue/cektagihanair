@@ -197,7 +197,7 @@ Belum ada data
 </div>
 
 <script>
-// 1. Cukup tulis ini SEKALI saja di paling atas
+// --- 1. KONFIGURASI (PASTIKAN HANYA ADA SATU DI SINI) ---
 const SUPABASE_URL = "https://ugezkavpzvcbwxmqgbrx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_2_2AqhV53QcVf8CQtuQJ9A_9Ll2JNir";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -206,14 +206,14 @@ let role = "";
 let globalData = [];
 let filteredData = [];
 
-// 2. Baru masukkan fungsi login (Pakai versi Logika Paksa tadi)
+// --- 2. FUNGSI LOGIN ---
 function login() {
     console.log("Tombol login ditekan");
     const userEl = document.getElementById("username");
     const passEl = document.getElementById("password");
 
     if (!userEl || !passEl) {
-        alert("Eror: ID username atau password tidak ditemukan di HTML!");
+        alert("Eror: Kotak input tidak ditemukan!");
         return;
     }
 
@@ -224,161 +224,85 @@ function login() {
         role = "admin";
         localStorage.setItem("role", "admin");
         masuk();
-    } 
-    else if (user === "kolektor" && pass === "1234") {
+    } else if (user === "kolektor" && pass === "1234") {
         role = "kolektor";
         localStorage.setItem("role", "kolektor");
         masuk();
-    } 
-    else {
+    } else {
         alert("Username atau Password salah!");
     }
 }
 
-function masuk(){
-    document.getElementById("loginBox").style.display = "none";
+function masuk() {
+    // Sembunyikan box login
+    const loginBox = document.getElementById("loginBox");
+    if(loginBox) loginBox.style.display = "none";
+
+    // Tampilkan panel sesuai role
+    if (role === "admin") {
+        const adminPanel = document.getElementById("adminPanel");
+        if(adminPanel) adminPanel.style.display = "block";
+    }
+    if (role === "kolektor") {
+        const kolektorPanel = document.getElementById("kolektorPanel");
+        if(kolektorPanel) kolektorPanel.style.display = "block";
+    }
     
-    if(role === "admin"){
-        document.getElementById("adminPanel").style.display = "block";
-    }
-    if(role === "kolektor"){
-        document.getElementById("kolektorPanel").style.display = "block";
-    }
     loadData();
 }
 
-function logout(){
-    localStorage.removeItem("role");
-    location.reload();
-}
+// --- 3. MANAJEMEN DATA ---
+async function loadData() {
+    try {
+        let { data, error } = await supabase.from("tirto_data").select("*");
+        if (error) throw error;
 
-// --- 2. DATA MANAGEMENT ---
-async function loadData(){
-    let { data, error } = await supabase
-        .from("tirto_data")
-        .select("*");
+        globalData = data.map(x => ({
+            "No": x.no,
+            "Konsumen": x.konsumen,
+            "Alamat": x.alamat,
+            "Blok": x.blok,
+            "Tipe": x.tipe,
+            "Kolektor": x.kolektor,
+            "Awal Meter": x.meter_awal,
+            "Meter Sekarang": x.meter_akhir,
+            "Bayar": x.bayar || 0
+        }));
 
-    if(error){
-        console.error("Gagal ambil data:", error);
-        return;
+        filteredData = [...globalData];
+        render(filteredData);
+    } catch (err) {
+        console.error("Gagal load data:", err);
     }
-
-    globalData = data.map(x => ({
-        "No": x.no,
-        "Konsumen": x.konsumen,
-        "Alamat": x.alamat,
-        "Blok": x.blok,
-        "Tipe": x.tipe,
-        "Kolektor": x.kolektor,
-        "Awal Meter": x.meter_awal,
-        "Meter Sekarang": x.meter_akhir,
-        "Bayar": x.bayar || 0
-    }));
-
-    filteredData = [...globalData];
-    isiKolektor();
-    render(filteredData);
 }
 
-// --- 3. TAMPILAN (RENDER) ---
 function render(data) {
-    const headTabel = document.getElementById("headTabel");
     const bodyTabel = document.getElementById("bodyTabel");
+    if(!bodyTabel) return;
 
-    if (data.length === 0) {
-        bodyTabel.innerHTML = `<tr><td colspan="15" style="text-align:center;">Belum ada data</td></tr>`;
-        return;
-    }
-
-    // Header Tabel
-    let headerHtml = "";
-    if (role === "admin" || role === "kolektor") {
-        headerHtml = `<tr><th>No</th><th>Konsumen</th><th>Alamat</th><th>Blok</th><th>Kolektor</th><th>Meter Awal</th><th>Meter Akhir</th><th>Pemakaian</th><th>Tagihan</th><th>Status</th><th>Bayar</th><th>Sisa</th></tr>`;
-    } else {
-        headerHtml = `<tr><th>No</th><th>Konsumen</th><th>Alamat</th><th>Blok</th><th>Kolektor</th><th>Pemakaian</th><th>Tagihan</th><th>Status</th></tr>`;
-    }
-    headTabel.innerHTML = headerHtml;
-
-    // Isi Tabel
     let html = "";
     data.forEach((row, i) => {
         let lama = Number(row["Awal Meter"] || 0);
         let sekarang = Number(row["Meter Sekarang"] || lama);
-        let pakai = sekarang - lama;
-        if (pakai < 0) pakai = 0;
-
-        let tipe = (row["Tipe"] || "").toLowerCase();
-        let tarif = tipe.includes("niaga") ? 800 : (tipe.includes("sosial") ? 0 : 500);
-
-        let tagihan = pakai * tarif;
-        let bayar = Number(row["Bayar"] || 0);
-        let sisa = tagihan - bayar;
-        let klsStatus = sisa <= 0 ? "status-lunas" : "status-belum";
-        let teksStatus = sisa <= 0 ? "Lunas" : "Belum Bayar";
-
-        if (role === "admin" || role === "kolektor") {
-            html += `<tr>
-                <td>${row["No"] || i + 1}</td>
-                <td>${row["Konsumen"]}</td>
-                <td>${row["Alamat"]}</td>
-                <td>${row["Blok"]}</td>
-                <td>${row["Kolektor"]}</td>
-                <td>${lama}</td>
-                <td><input type="number" value="${sekarang}" onchange="updateRow('${row["No"]}', 'Meter Sekarang', this.value)" style="width:70px"></td>
-                <td>${pakai}</td>
-                <td>${tagihan.toLocaleString()}</td>
-                <td class="${klsStatus}">${teksStatus}</td>
-                <td><input type="number" value="${bayar}" onchange="updateRow('${row["No"]}', 'Bayar', this.value)" style="width:70px"></td>
-                <td>${sisa.toLocaleString()}</td>
-            </tr>`;
-        } else {
-            html += `<tr>
-                <td>${row["No"] || i + 1}</td>
-                <td>${row["Konsumen"]}</td>
-                <td>${row["Alamat"]}</td>
-                <td>${row["Blok"]}</td>
-                <td>${row["Kolektor"]}</td>
-                <td>${pakai}</td>
-                <td>${tagihan.toLocaleString()}</td>
-                <td class="${klsStatus}">${teksStatus}</td>
-            </tr>`;
-        }
+        let tarif = (row["Tipe"] || "").toLowerCase().includes("niaga") ? 800 : 500;
+        let tagihan = (sekarang - lama) * tarif;
+        
+        html += `<tr>
+            <td>${row["No"] || i+1}</td>
+            <td>${row["Konsumen"]}</td>
+            <td>${row["Alamat"]}</td>
+            <td>${tagihan.toLocaleString()}</td>
+            <td>${row["Kolektor"] || "-"}</td>
+        </tr>`;
     });
     bodyTabel.innerHTML = html;
 }
 
-// --- 4. FITUR TAMBAHAN ---
-function updateRow(no, kolom, nilai) {
-    let index = globalData.findIndex(x => x["No"] == no);
-    if (index !== -1) {
-        globalData[index][kolom] = Number(nilai);
-        render(filteredData);
-    }
-}
-
-function isiKolektor(){
-    let list = [...new Set(globalData.map(x => x["Kolektor"] || ""))];
-    let select = document.getElementById("filterKolektor");
-    if(!select) return;
-    select.innerHTML = '<option value="">-- Pilih Nama Kolektor --</option>';
-    list.forEach(nama => {
-        if(nama) select.innerHTML += `<option value="${nama}">${nama}</option>`;
-    });
-}
-
-function cariData(){
-    let key = document.getElementById("cari").value.toLowerCase();
-    filteredData = globalData.filter(x => 
-        (x["Konsumen"]||"").toLowerCase().includes(key) || 
-        (x["Alamat"]||"").toLowerCase().includes(key)
-    );
-    render(filteredData);
-}
-
-window.onload = function(){
-    let r = localStorage.getItem("role");
-    if(r) {
-        role = r;
+// Jalankan otomatis saat web dibuka
+window.onload = function() {
+    let savedRole = localStorage.getItem("role");
+    if (savedRole) {
+        role = savedRole;
         masuk();
     } else {
         loadData();
