@@ -6,6 +6,7 @@
 <title>Tirto Langgeng</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 :root{
@@ -189,6 +190,10 @@ Belum ada data
 </div>
 
 <script>
+const SUPABASE_URL = "https://ugezkavpzvcbwxmqgbrx.supabase.co";
+const SUPABASE_KEY = "sb_publishable_2_2AqhV53QcVf8CQtuQJ9A_9Ll2JNir";
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let role = "";
 let globalData = [];
 let filteredData = [];
@@ -285,20 +290,40 @@ alert("Upload berhasil : "+globalData.length+" data");
 }
 
 // LOAD DATA
-function loadData(){
+async function loadData(){
 
-let data = localStorage.getItem("tirtoData");
+let { data, error } = await supabase
+.from("tirto_data")
+.select("*");
 
-if(data){
+if(error){
+alert("Gagal ambil data");
+console.log(error);
+return;
+}
 
-globalData = JSON.parse(data);
-filteredData = globalData;
+globalData = data.map(x => ({
+"No": x.no,
+"Konsumen": x.konsumen,
+"Alamat": x.alamat,
+"Blok": x.blok,
+"Tipe": x.tipe,
+"Kolektor": x.kolektor,
+"Awal Meter": x.meter_awal,
+"Meter Sekarang": x.meter_akhir,
+"Input Meter": x.input_meter,
+"Pemakaian": x.pemakaian,
+"Tagihan": x.tagihan,
+"Status": x.status,
+"Bayar": x.bayar,
+"Sisa": x.sisa
+}));
+
+filteredData = [...globalData];
 
 isiKolektor();
 render(filteredData);
 }
-}
-
 // FILTER KOLEKTOR
 function isiKolektor(){
 
@@ -487,18 +512,33 @@ link.click();
 }
 
 // HAPUS
-function hapusCSV(){
+async function hapusCSV(){
 
-if(confirm("Yakin hapus semua data?")){
+if(!confirm("Yakin hapus semua data?")) return;
 
-globalData=[];
-filteredData=[];
+let { error } = await supabase
+.from("tirto_data")
+.delete()
+.neq("no", 0);
 
-localStorage.removeItem("tirtoData");
+if(error){
+alert("Gagal hapus data");
+console.log(error);
+return;
+}
 
+globalData = [];
+filteredData = [];
 render([]);
+
+alert("Data berhasil dihapus");
 }
-}
+
+
+// LOAD DATA SAAT HALAMAN DIBUKA
+window.addEventListener("DOMContentLoaded", () => {
+    loadData();
+});
 </script>
 
 </body>
