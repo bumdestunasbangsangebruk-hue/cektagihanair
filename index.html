@@ -6,7 +6,6 @@
 <title>Tirto Langgeng</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 :root{
@@ -74,12 +73,11 @@ cursor:pointer;
 
 .hidden{display:none;}
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-    /* Hapus atau komentari min-width: 1600px; */
-    min-width: 600px; 
+table{
+width:100%;
+border-collapse:collapse;
+font-size:13px;
+min-width:1600px;
 }
 
 th,td{
@@ -110,10 +108,12 @@ overflow-x:auto;
 
 <!-- LOGIN -->
 <div class="card" id="loginBox">
-    <h3>🔐 Login Sistem</h3>
-    <input type="text" id="username" placeholder="Username">
-    <input type="password" id="password" placeholder="Password">
-    <button class="btn" onclick="login()">Login</button>
+<h3>🔐 Login Sistem</h3>
+
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+
+<button class="btn" onclick="login()">Login</button>
 </div>
 
 <!-- HEADER -->
@@ -149,46 +149,22 @@ overflow-x:auto;
 </div>
 
 <!-- SEARCH -->
-<div class="card" style="margin-bottom: 15px;">
-    <input type="text" id="cari" placeholder="Cari pelanggan..." onkeyup="cariData()" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+<div class="card">
+<input type="text" id="cari" placeholder="Cari pelanggan..." onkeyup="cariData()">
 </div>
 
-<div class="card" style="overflow-x: auto;">
-    <table style="width: 100%; border-collapse: collapse;">
-        <thead id="headTabel" style="background-color: #f8f9fa;">
-            </thead>
-        <tbody id="bodyTabel">
-            <tr>
-                <td colspan="10" style="text-align:center; padding: 20px;">Memuat data...</td>
-            </tr>
-        </tbody>
-    </table>
-</div>
 <!-- TABLE -->
 <div class="card wrap">
-    <table>
-        <thead id="headTabel"></thead>
-        
-        <tbody id="bodyTabel">
-            <tr>
-                <td colspan="12" style="text-align:center;padding:20px;">
-                    Memuat data...
-                </td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-
+<table>
+<thead>
 <tr>
 <th>No</th>
 <th>Konsumen</th>
 <th>Alamat</th>
 <th>Blok</th>
-<th>Tipe</th>
 <th>Kolektor</th>
-<th>Meter Awal</th>
-<th>Meter Akhir</th>
-<th>Input Meter</th>
+<th>Meter Lama</th>
+<th>Meter Sekarang</th>
 <th>Pemakaian</th>
 <th>Tagihan</th>
 <th>Status</th>
@@ -208,124 +184,286 @@ Belum ada data
 </div>
 
 <script>
-// 1. Inisialisasi
-const SUPABASE_URL = "https://ugezkavpzvcbwxmqgbrx.supabase.co";
-const SUPABASE_KEY = "sb_publishable_2_2AqhV53QcVf8CQtuQJ9A_9Ll2JNir";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 let role = "";
 let globalData = [];
+let filteredData = [];
 
-// 2. Fungsi Login
-function login() {
-    const user = document.getElementById("username").value.trim();
-    const pass = document.getElementById("password").value.trim();
+// LOGIN
+function login(){
 
-    if (user === "Admin" && pass === "1234") {
-        role = "admin";
-        localStorage.setItem("role", "admin");
-        masuk();
-    } else if (user === "kolektor" && pass === "1234") {
-        role = "kolektor";
-        localStorage.setItem("role", "kolektor");
-        masuk();
-    } else {
-        alert("Username atau Password salah!");
-    }
+let user = username.value.trim();
+let pass = password.value.trim();
+
+if(user==="Admin" && pass==="Tun@s123"){
+role="admin";
+localStorage.setItem("role","admin");
+masuk();
+}
+else if(user==="kolektor" && pass==="bpsab123"){
+role="kolektor";
+localStorage.setItem("role","kolektor");
+masuk();
+}
+else{
+alert("Username / Password salah!");
+}
 }
 
-function masuk() {
-    const lb = document.getElementById("loginBox");
-    if(lb) lb.style.display = "none";
-    
-    // Munculkan panel admin jika ada
-    const ap = document.getElementById("adminPanel");
-    if(ap && role === "admin") ap.style.display = "block";
+function masuk(){
 
-    loadData();
+loginBox.style.display="none";
+
+if(role==="admin"){
+adminPanel.style.display="block";
 }
 
-function logout() {
-    localStorage.removeItem("role");
-    location.reload();
+if(role==="kolektor"){
+kolektorPanel.style.display="block";
 }
 
-// 3. Ambil Data
-async function loadData() {
-    try {
-        const { data, error } = await supabase.from("tirto_data").select("*");
-        if (error) throw error;
-        
-        globalData = data;
-        render(globalData);
-    } catch (err) {
-        console.error("Gagal ambil data:", err.message);
-    }
+loadData();
 }
 
-// 4. Render Tabel (Dibuat Pas & Rapi)
-function render(data) {
-    const head = document.getElementById("headTabel");
-    const body = document.getElementById("bodyTabel");
-
-    // Header tabel
-    head.innerHTML = `
-        <tr style="border-bottom: 2px solid #ddd; text-align: left;">
-            <th style="padding: 10px;">No</th>
-            <th style="padding: 10px;">Konsumen</th>
-            <th style="padding: 10px;">Alamat</th>
-            <th style="padding: 10px;">Blok</th>
-            <th style="padding: 10px;">Pemakaian</th>
-            <th style="padding: 10px;">Tagihan</th>
-            <th style="padding: 10px; text-align: center;">Status</th>
-        </tr>`;
-
-    let html = "";
-    data.forEach((row, i) => {
-        let m1 = Number(row.meter_awal || 0);
-        let m2 = Number(row.meter_akhir || m1);
-        let pakai = m2 - m1;
-        let tarif = (row.tipe || "").toLowerCase().includes("niaga") ? 800 : 500;
-        let total = pakai * tarif;
-        
-        let bayar = Number(row.bayar || 0);
-        let sisa = total - bayar;
-        let kls = sisa <= 0 ? "background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px;" : "background: #f8d7da; color: #721c24; padding: 4px 8px; border-radius: 4px;";
-        let teks = sisa <= 0 ? "Lunas" : "Belum Bayar";
-
-        html += `
-            <tr style="border-bottom: 1px solid #eee;">
-                <td style="padding: 10px;">${i + 1}</td>
-                <td style="padding: 10px;"><b>${row.konsumen || '-'}</b></td>
-                <td style="padding: 10px;">${row.alamat || '-'}</td>
-                <td style="padding: 10px;">${row.blok || '-'}</td>
-                <td style="padding: 10px;">${pakai} m³</td>
-                <td style="padding: 10px;">Rp ${total.toLocaleString()}</td>
-                <td style="padding: 10px; text-align: center;"><span style="${kls}">${teks}</span></td>
-            </tr>`;
-    });
-    body.innerHTML = html;
+function logout(){
+localStorage.removeItem("role");
+location.reload();
 }
 
-// Fungsi Cari
-function cariData() {
-    const k = document.getElementById("cari").value.toLowerCase();
-    const hasil = globalData.filter(x => 
-        (x.konsumen || "").toLowerCase().includes(k) || 
-        (x.alamat || "").toLowerCase().includes(k)
-    );
-    render(hasil);
+// SAAT BUKA
+window.onload=function(){
+
+let r = localStorage.getItem("role");
+
+if(r){
+role=r;
+masuk();
+}else{
+loadData();
+}
 }
 
-window.onload = function() {
-    const r = localStorage.getItem("role");
-    if (r) {
-        role = r;
-        masuk();
-    } else {
-        loadData();
-    }
-};
+// UPLOAD CEPAT
+function uploadCSV(){
+
+let file = csvFile.files[0];
+
+if(!file){
+alert("Pilih file CSV");
+return;
+}
+
+Papa.parse(file,{
+header:true,
+skipEmptyLines:true,
+worker:true,
+fastMode:true,
+
+complete:function(res){
+
+globalData = res.data;
+filteredData = [...globalData];
+
+localStorage.setItem(
+"tirtoData",
+JSON.stringify(globalData)
+);
+
+isiKolektor();
+render(filteredData);
+
+alert("Upload berhasil : "+globalData.length+" data");
+}
+});
+}
+
+// LOAD DATA
+function loadData(){
+
+let data = localStorage.getItem("tirtoData");
+
+if(data){
+
+globalData = JSON.parse(data);
+filteredData = globalData;
+
+isiKolektor();
+render(filteredData);
+}
+}
+
+// FILTER KOLEKTOR
+function isiKolektor(){
+
+let list = [...new Set(globalData.map(x=>x["Kolektor"]||""))];
+
+filterKolektor.innerHTML =
+'<option value="">-- Pilih Nama Kolektor --</option>';
+
+list.forEach(nama=>{
+if(nama!=""){
+filterKolektor.innerHTML +=
+`<option value="${nama}">${nama}</option>`;
+}
+});
+}
+
+function pilihKolektor(){
+
+let nama = filterKolektor.value;
+
+if(nama===""){
+filteredData = globalData;
+}else{
+filteredData =
+globalData.filter(x=>x["Kolektor"]===nama);
+}
+
+render(filteredData);
+}
+
+// RENDER CEPAT
+function render(data){
+
+if(data.length===0){
+bodyTabel.innerHTML =
+`<tr><td colspan="12">Belum ada data</td></tr>`;
+return;
+}
+
+let html="";
+
+data.forEach((row,i)=>{
+
+let lama = Number(row["Awal Meter"]||0);
+let sekarang = Number(row["Meter Sekarang"]||lama);
+
+let pakai = sekarang-lama;
+if(pakai<0)pakai=0;
+
+let tagihan = Number(row["Tagihan"]||0);
+let bayar = Number(row["Bayar"]||0);
+
+let sisa = tagihan-bayar;
+
+let status =
+sisa<=0 ? "Sudah Bayar":"Belum Bayar";
+
+html += `
+<tr>
+<td>${row["No"]||i+1}</td>
+<td>${row["Konsumen"]||""}</td>
+<td>${row["Alamat"]||""}</td>
+<td>${row["Blok"]||""}</td>
+<td>${row["Kolektor"]||""}</td>
+<td>${lama}</td>
+<td>${sekarang}</td>
+<td>${pakai}</td>
+<td>${tagihan}</td>
+<td class="${status==='Sudah Bayar'?'status-lunas':'status-belum'}">${status}</td>
+<td>${bayar}</td>
+<td>${sisa}</td>
+</tr>
+`;
+
+});
+
+bodyTabel.innerHTML = html;
+}
+
+// UBAH DATA
+function ubah(no,kolom,nilai){
+
+let index =
+globalData.findIndex(x=>x["No"]==no);
+
+if(index!=-1){
+globalData[index][kolom]=nilai;
+}
+}
+
+// SIMPAN
+function simpanPerubahan(){
+
+localStorage.setItem(
+"tirtoData",
+JSON.stringify(globalData)
+);
+
+render(filteredData);
+
+alert("Perubahan berhasil disimpan");
+}
+
+// SEARCH
+function cariData(){
+
+let key = cari.value.toLowerCase();
+
+filteredData =
+globalData.filter(x=>
+
+(x["Konsumen"]||"").toLowerCase().includes(key) ||
+(x["Alamat"]||"").toLowerCase().includes(key) ||
+(x["Blok"]||"").toLowerCase().includes(key) ||
+(x["Kolektor"]||"").toLowerCase().includes(key)
+
+);
+
+render(filteredData);
+}
+
+// DOWNLOAD CSV
+function downloadCSV(){
+
+if(globalData.length===0){
+alert("Data kosong");
+return;
+}
+
+let csv = Papa.unparse(globalData);
+
+let blob = new Blob([csv],{
+type:"text/csv;charset=utf-8;"
+});
+
+let link = document.createElement("a");
+link.href = URL.createObjectURL(blob);
+link.download = "Data_Tagihan.csv";
+link.click();
+}
+
+// TEMPLATE CSV
+function downloadTemplate(){
+
+let csv =
+`No,Konsumen,Alamat,Blok,Kolektor,Awal Meter,Meter Sekarang,Tagihan,Bayar
+1,Budi,Ngebruk,A1,Slamet,100,110,5000,0
+2,Siti,Ngebruk,A2,Rudi,80,95,7500,7500`;
+
+let blob = new Blob([csv],{
+type:"text/csv;charset=utf-8;"
+});
+
+let link = document.createElement("a");
+link.href = URL.createObjectURL(blob);
+link.download = "Template_Tirto.csv";
+link.click();
+}
+
+// HAPUS
+function hapusCSV(){
+
+if(confirm("Yakin hapus semua data?")){
+
+globalData=[];
+filteredData=[];
+
+localStorage.removeItem("tirtoData");
+
+render([]);
+}
+}
 </script>
+
 </body>
 </html>
