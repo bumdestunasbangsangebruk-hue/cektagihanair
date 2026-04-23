@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
 <title>Tirto Langgeng</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
@@ -110,15 +110,15 @@ overflow-x:auto;
 <div class="card" id="loginBox">
 <h3>🔐 Login Sistem</h3>
 
-<input type="text" id="username" placeholder="Username">
-<input type="password" id="password" placeholder="Password">
+<input type="text" id="username" placeholder="Username" />
+<input type="password" id="password" placeholder="Password" />
 
 <button class="btn" onclick="login()">Login</button>
 </div>
 
 <!-- HEADER -->
 <div class="header">
-<img src="image_916921.png" class="logo">
+<img src="image_916921.png" class="logo" />
 <h2 style="margin:0;">TIRTO LANGGENG</h2>
 <p style="margin:5px 0 0 0;">BUMDes Tunas Bangsa Ngebruk</p>
 </div>
@@ -127,7 +127,7 @@ overflow-x:auto;
 <div class="card hidden" id="adminPanel">
 <h3>🔓 Mode Admin</h3>
 
-<input type="file" id="csvFile" accept=".csv">
+<input type="file" id="csvFile" accept=".csv" />
 
 <button class="btn" onclick="uploadCSV()">Upload CSV</button>
 <button class="orange" onclick="downloadTemplate()">Template CSV</button>
@@ -150,7 +150,7 @@ overflow-x:auto;
 
 <!-- SEARCH -->
 <div class="card">
-<input type="text" id="cari" placeholder="Cari pelanggan..." onkeyup="cariData()">
+<input type="text" id="cari" placeholder="Cari pelanggan..." onkeyup="cariData()" />
 </div>
 
 <!-- TABLE -->
@@ -162,9 +162,11 @@ overflow-x:auto;
 <th>Konsumen</th>
 <th>Alamat</th>
 <th>Blok</th>
+<th>Tipe</th>
 <th>Kolektor</th>
-<th>Meter Lama</th>
-<th>Meter Sekarang</th>
+<th>Meter Awal</th>
+<th>Meter Akhir</th>
+<th>Meter Baru</th>
 <th>Pemakaian</th>
 <th>Tagihan</th>
 <th>Status</th>
@@ -175,9 +177,7 @@ overflow-x:auto;
 
 <tbody id="bodyTabel">
 <tr>
-<td colspan="12" style="text-align:center;padding:20px;">
-Belum ada data
-</td>
+<td colspan="13" style="text-align:center;padding:20px;">Belum ada data</td>
 </tr>
 </tbody>
 </table>
@@ -189,281 +189,262 @@ let globalData = [];
 let filteredData = [];
 
 // LOGIN
-function login(){
+function login() {
+  let user = document.getElementById("username").value.trim();
+  let pass = document.getElementById("password").value.trim();
 
-let user = username.value.trim();
-let pass = password.value.trim();
-
-if(user==="Admin" && pass==="Tun@s123"){
-role="admin";
-localStorage.setItem("role","admin");
-masuk();
-}
-else if(user==="kolektor" && pass==="bpsab123"){
-role="kolektor";
-localStorage.setItem("role","kolektor");
-masuk();
-}
-else{
-alert("Username / Password salah!");
-}
+  if (user === "Admin" && pass === "1234") {
+    role = "admin";
+    localStorage.setItem("role", "admin");
+    masuk();
+  } else if (user === "kolektor" && pass === "12345") {
+    role = "kolektor";
+    localStorage.setItem("role", "kolektor");
+    masuk();
+  } else {
+    alert("Username / Password salah!");
+  }
 }
 
-function masuk(){
+function masuk() {
+  document.getElementById("loginBox").style.display = "none";
 
-loginBox.style.display="none";
+  if (role === "admin") {
+    document.getElementById("adminPanel").style.display = "block";
+  } else if (role === "kolektor") {
+    document.getElementById("kolektorPanel").style.display = "block";
+  }
 
-if(role==="admin"){
-adminPanel.style.display="block";
+  loadData();
 }
 
-if(role==="kolektor"){
-kolektorPanel.style.display="block";
+function logout() {
+  localStorage.removeItem("role");
+  location.reload();
 }
 
-loadData();
-}
+// Saat Load
+window.onload = function () {
+  let r = localStorage.getItem("role");
+  if (r) {
+    role = r;
+    masuk();
+  } else {
+    loadData();
+  }
+};
 
-function logout(){
-localStorage.removeItem("role");
-location.reload();
-}
+// UPLOAD CSV
+function uploadCSV() {
+  let file = document.getElementById("csvFile").files[0];
+  if (!file) {
+    alert("Pilih file CSV");
+    return;
+  }
 
-// SAAT BUKA
-window.onload=function(){
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    worker: true,
+    fastMode: true,
+    complete: function (res) {
+      globalData = res.data;
+      filteredData = [...globalData];
 
-let r = localStorage.getItem("role");
+      localStorage.setItem("tirtoData", JSON.stringify(globalData));
+      isiKolektor();
+      render(filteredData);
 
-if(r){
-role=r;
-masuk();
-}else{
-loadData();
-}
-}
-
-// UPLOAD CEPAT
-function uploadCSV(){
-
-let file = csvFile.files[0];
-
-if(!file){
-alert("Pilih file CSV");
-return;
-}
-
-Papa.parse(file,{
-header:true,
-skipEmptyLines:true,
-worker:true,
-fastMode:true,
-
-complete:function(res){
-
-globalData = res.data;
-filteredData = [...globalData];
-
-localStorage.setItem(
-"tirtoData",
-JSON.stringify(globalData)
-);
-
-isiKolektor();
-render(filteredData);
-
-alert("Upload berhasil : "+globalData.length+" data");
-}
-});
+      alert("Upload berhasil : " + globalData.length + " data");
+    },
+  });
 }
 
 // LOAD DATA
-function loadData(){
-
-let data = localStorage.getItem("tirtoData");
-
-if(data){
-
-globalData = JSON.parse(data);
-filteredData = globalData;
-
-isiKolektor();
-render(filteredData);
-}
+function loadData() {
+  let data = localStorage.getItem("tirtoData");
+  if (data) {
+    globalData = JSON.parse(data);
+    filteredData = globalData;
+    isiKolektor();
+    render(filteredData);
+  }
 }
 
 // FILTER KOLEKTOR
-function isiKolektor(){
-
-let list = [...new Set(globalData.map(x=>x["Kolektor"]||""))];
-
-filterKolektor.innerHTML =
-'<option value="">-- Pilih Nama Kolektor --</option>';
-
-list.forEach(nama=>{
-if(nama!=""){
-filterKolektor.innerHTML +=
-`<option value="${nama}">${nama}</option>`;
-}
-});
+function isiKolektor() {
+  let list = [...new Set(globalData.map((x) => x["Kolektor"] || ""))];
+  document.getElementById("filterKolektor").innerHTML =
+    '<option value="">-- Pilih Nama Kolektor --</option>';
+  list.forEach((nama) => {
+    if (nama != "") {
+      document.getElementById("filterKolektor").innerHTML += `<option value="${nama}">${nama}</option>`;
+    }
+  });
 }
 
-function pilihKolektor(){
-
-let nama = filterKolektor.value;
-
-if(nama===""){
-filteredData = globalData;
-}else{
-filteredData =
-globalData.filter(x=>x["Kolektor"]===nama);
+function pilihKolektor() {
+  let nama = document.getElementById("filterKolektor").value;
+  if (nama === "") {
+    filteredData = globalData;
+  } else {
+    filteredData = globalData.filter((x) => x["Kolektor"] === nama);
+  }
+  render(filteredData);
 }
 
-render(filteredData);
-}
+// RENDER DATA
+function render(data) {
+  const role = localStorage.getItem("role");
+  const isAdminOrKolektor = role === "admin" || role === "kolektor";
 
-// RENDER CEPAT
-function render(data){
+  if (data.length === 0) {
+    document.getElementById("bodyTabel").innerHTML = `<tr><td colspan="13" style="text-align:center;padding:20px;">Belum ada data</td></tr>`;
+    return;
+  }
 
-if(data.length===0){
-bodyTabel.innerHTML =
-`<tr><td colspan="12">Belum ada data</td></tr>`;
-return;
-}
+  let html = "";
+  data.forEach((row, i) => {
+    let lama = Number(row["Meter Awal"] || 0);
+    let sekarang = Number(row["Meter Akhir"] || lama);
+    let meter_baru = row["Meter Baru"] || "";
+    let kolektor = row["Kolektor"] || "";
+    let tipe = row["Tipe"] || "";
 
-let html="";
+    let pakai = sekarang - lama;
+    if (pakai < 0) pakai = 0;
 
-data.forEach((row,i)=>{
+    let tagihan = Number(row["Tagihan"] || 0);
+    let bayar = Number(row["Bayar"] || 0);
+    let sisa = tagihan - bayar;
 
-let lama = Number(row["Awal Meter"]||0);
-let sekarang = Number(row["Meter Sekarang"]||lama);
+    let status = sisa <= 0 ? "Sudah Bayar" : "Belum Bayar";
 
-let pakai = sekarang-lama;
-if(pakai<0)pakai=0;
+    // Role-based column visibility
+    let showAllColumns = isAdminOrKolektor;
+    let showLimitedColumns = role === "pengguna";
 
-let tagihan = Number(row["Tagihan"]||0);
-let bayar = Number(row["Bayar"]||0);
-
-let sisa = tagihan-bayar;
-
-let status =
-sisa<=0 ? "Sudah Bayar":"Belum Bayar";
-
-html += `
+    // Untuk pengguna umum, tampilkan kolom tertentu
+    if (role === "pengguna") {
+      html += `
 <tr>
-<td>${row["No"]||i+1}</td>
-<td>${row["Konsumen"]||""}</td>
-<td>${row["Alamat"]||""}</td>
-<td>${row["Blok"]||""}</td>
-<td>${row["Kolektor"]||""}</td>
+<td>${row["No"] || i + 1}</td>
+<td>${row["Konsumen"] || ""}</td>
+<td>${row["Alamat"] || ""}</td>
+<td>${row["Blok"] || ""}</td>
+<td>${row["Tipe"] || ""}</td>
+<td>${row["Kolektor"] || ""}</td>
 <td>${lama}</td>
 <td>${sekarang}</td>
+<td></td> <!-- Meter Baru tidak perlu tampil -->
+<td>${pakai}</td>
+<td>${tagihan}</td>
+<td class="${status === 'Sudah Bayar' ? 'status-lunas' : 'status-belum'}">${status}</td>
+<td>${bayar}</td>
+<td>${sisa}</td>
+</tr>`;
+    } else {
+      // Untuk admin dan kolektor, tampil semua kolom dan bisa edit
+      html += `
+<tr>
+<td>${row["No"] || i + 1}</td>
+<td contenteditable="${showAllColumns}" onblur="ubah(${row["No"]},'Konsumen',this.innerText)">${row["Konsumen"] || ""}</td>
+<td contenteditable="${showAllColumns}" onblur="ubah(${row["No"]},'Alamat',this.innerText)">${row["Alamat"] || ""}</td>
+<td contenteditable="${showAllColumns}" onblur="ubah(${row["No"]},'Blok',this.innerText)">${row["Blok"] || ""}</td>
+<td>
+  <select ${showAllColumns ? "" : "disabled"} onchange="ubah(${row["No"]},'Tipe',this.value)">
+    <option value="Rumah Tangga" ${row["Tipe"]==="Rumah Tangga"?"selected":""}>Rumah Tangga</option>
+    <option value="Niaga" ${row["Tipe"]==="Niaga"?"selected":""}>Niaga</option>
+    <option value="Sosial" ${row["Tipe"]==="Sosial"?"selected":""}>Sosial</option>
+  </select>
+</td>
+<td contenteditable="${showAllColumns}" onblur="ubah(${row["No"]},'Kolektor',this.innerText)">${row["Kolektor"] || ""}</td>
+<td>${lama}</td>
+<td>${sekarang}</td>
+<td>
+  <input type="number" min="0" value="${meter_baru}" ${showAllColumns ? "" : "disabled"} onchange="ubahMeterBaru(${row["No"]},this.value)">
+</td>
 <td>${pakai}</td>
 <td>${tagihan}</td>
 <td class="${status==='Sudah Bayar'?'status-lunas':'status-belum'}">${status}</td>
 <td>${bayar}</td>
 <td>${sisa}</td>
-</tr>
-`;
-
-});
-
-bodyTabel.innerHTML = html;
+</tr>`;
+    }
+  });
+  document.getElementById("bodyTabel").innerHTML = html;
 }
 
-// UBAH DATA
-function ubah(no,kolom,nilai){
-
-let index =
-globalData.findIndex(x=>x["No"]==no);
-
-if(index!=-1){
-globalData[index][kolom]=nilai;
-}
+// Ubah data
+function ubah(no, kolom, nilai) {
+  let index = globalData.findIndex((x) => x["No"] == no);
+  if (index != -1) {
+    globalData[index][kolom] = nilai;
+  }
 }
 
-// SIMPAN
-function simpanPerubahan(){
-
-localStorage.setItem(
-"tirtoData",
-JSON.stringify(globalData)
-);
-
-render(filteredData);
-
-alert("Perubahan berhasil disimpan");
+// Ubah Meter Baru
+function ubahMeterBaru(no, nilai) {
+  let index = globalData.findIndex((x) => x["No"] == no);
+  if (index != -1) {
+    globalData[index]["Meter Baru"] = nilai;
+  }
 }
 
-// SEARCH
-function cariData(){
-
-let key = cari.value.toLowerCase();
-
-filteredData =
-globalData.filter(x=>
-
-(x["Konsumen"]||"").toLowerCase().includes(key) ||
-(x["Alamat"]||"").toLowerCase().includes(key) ||
-(x["Blok"]||"").toLowerCase().includes(key) ||
-(x["Kolektor"]||"").toLowerCase().includes(key)
-
-);
-
-render(filteredData);
+// Simpan perubahan
+function simpanPerubahan() {
+  localStorage.setItem("tirtoData", JSON.stringify(globalData));
+  render(filteredData);
+  alert("Perubahan berhasil disimpan");
 }
 
-// DOWNLOAD CSV
-function downloadCSV(){
-
-if(globalData.length===0){
-alert("Data kosong");
-return;
+// Cari data
+function cariData() {
+  let key = document.getElementById("cari").value.toLowerCase();
+  filteredData = globalData.filter(
+    (x) =>
+      (x["Konsumen"] || "").toLowerCase().includes(key) ||
+      (x["Alamat"] || "").toLowerCase().includes(key) ||
+      (x["Blok"] || "").toLowerCase().includes(key) ||
+      (x["Kolektor"] || "").toLowerCase().includes(key) ||
+      (x["Tipe"] || "").toLowerCase().includes(key)
+  );
+  render(filteredData);
 }
 
-let csv = Papa.unparse(globalData);
-
-let blob = new Blob([csv],{
-type:"text/csv;charset=utf-8;"
-});
-
-let link = document.createElement("a");
-link.href = URL.createObjectURL(blob);
-link.download = "Data_Tagihan.csv";
-link.click();
+// Download CSV
+function downloadCSV() {
+  if (globalData.length === 0) {
+    alert("Data kosong");
+    return;
+  }
+  let csv = Papa.unparse(globalData);
+  let blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  let link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "Data_Tagihan.csv";
+  link.click();
 }
 
-// TEMPLATE CSV
-function downloadTemplate(){
-
-let csv =
-`No,Konsumen,Alamat,Blok,Kolektor,Awal Meter,Meter Sekarang,Tagihan,Bayar
-1,Budi,Ngebruk,A1,Slamet,100,110,5000,0
-2,Siti,Ngebruk,A2,Rudi,80,95,7500,7500`;
-
-let blob = new Blob([csv],{
-type:"text/csv;charset=utf-8;"
-});
-
-let link = document.createElement("a");
-link.href = URL.createObjectURL(blob);
-link.download = "Template_Tirto.csv";
-link.click();
+// Download Template CSV
+function downloadTemplate() {
+  let csv = `No,Konsumen,Alamat,Blok,Tipe,Kolektor,Meter Awal,Meter Akhir,Tagihan,Bayar\n1,Budi,Ngebruk,A1,Sosial,Slamet,100,110,5000,0\n2,Siti,Ngebruk,A2,Niaga,Rudi,80,95,7500,7500`;
+  let blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  let link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "Template_Tirto.csv";
+  link.click();
 }
 
-// HAPUS
-function hapusCSV(){
-
-if(confirm("Yakin hapus semua data?")){
-
-globalData=[];
-filteredData=[];
-
-localStorage.removeItem("tirtoData");
-
-render([]);
-}
+// Hapus data
+function hapusCSV() {
+  if (confirm("Yakin hapus semua data?")) {
+    globalData = [];
+    filteredData = [];
+    localStorage.removeItem("tirtoData");
+    render([]);
+  }
 }
 </script>
-
 </body>
 </html>
