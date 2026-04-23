@@ -386,9 +386,35 @@ function render(data) {
         let lama = Number(row["Awal Meter"] || 0);
         let sekarang = Number(row["Meter Sekarang"] || lama);
         let pakai = sekarang - lama;
-        if (pakai < 0) pakai = 0;
+if (pakai < 0) pakai = 0;
 
-        let tagihan = Number(row["Tagihan"] || 0);
+// 🔥 TAMBAHAN TARIF
+let tipe = (row["Tipe"] || "").toLowerCase();
+
+let tarif = 0;
+
+if (tipe === "rumah tangga") {
+    tarif = 500;
+} 
+else if (tipe === "niaga") {
+    tarif = 800;
+} 
+else if (tipe === "sosial") {
+    tarif = 0;
+}
+
+// 🔥 HITUNG TAGIHAN
+let tagihan = pakai * tarif;
+} 
+else if (tipe === "niaga") {
+    tarif = 800;
+} 
+else if (tipe === "sosial") {
+    tarif = 0;
+}
+
+// hitung otomatis tagihan
+let tagihan = pakai * tarif;
         let bayar = Number(row["Bayar"] || 0);
         let sisa = tagihan - bayar;
         let status = sisa <= 0 ? "Sudah Bayar" : "Belum Bayar";
