@@ -197,25 +197,26 @@ Belum ada data
 </div>
 
 <script>
-// --- 1. KONFIGURASI (PASTIKAN HANYA ADA SATU DI SINI) ---
+// 1. KONFIGURASI UTAMA
 const SUPABASE_URL = "https://ugezkavpzvcbwxmqgbrx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_2_2AqhV53QcVf8CQtuQJ9A_9Ll2JNir";
+
+// Inisialisasi Supabase dengan pengecekan aman
+let supabase;
+try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+} catch (e) {
+    console.error("Gagal inisialisasi Supabase. Pastikan library CDN sudah terpasang.");
+}
 
 let role = "";
 let globalData = [];
 let filteredData = [];
 
-// --- 2. FUNGSI LOGIN ---
+// 2. FUNGSI LOGIN
 function login() {
-    console.log("Tombol login ditekan");
     const userEl = document.getElementById("username");
     const passEl = document.getElementById("password");
-
-    if (!userEl || !passEl) {
-        alert("Eror: Kotak input tidak ditemukan!");
-        return;
-    }
-
     let user = userEl.value.trim();
     let pass = passEl.value.trim();
 
@@ -233,27 +234,29 @@ function login() {
 }
 
 function masuk() {
-    // Sembunyikan box login
     const loginBox = document.getElementById("loginBox");
-    if(loginBox) loginBox.style.display = "none";
+    const adminPanel = document.getElementById("adminPanel");
+    const kolektorPanel = document.getElementById("kolektorPanel");
 
-    // Tampilkan panel sesuai role
-    if (role === "admin") {
-        const adminPanel = document.getElementById("adminPanel");
-        if(adminPanel) adminPanel.style.display = "block";
-    }
-    if (role === "kolektor") {
-        const kolektorPanel = document.getElementById("kolektorPanel");
-        if(kolektorPanel) kolektorPanel.style.display = "block";
-    }
+    if (loginBox) loginBox.style.display = "none";
+    
+    if (role === "admin" && adminPanel) adminPanel.style.display = "block";
+    if (role === "kolektor" && kolektorPanel) kolektorPanel.style.display = "block";
     
     loadData();
 }
 
-// --- 3. MANAJEMEN DATA ---
+function logout() {
+    localStorage.removeItem("role");
+    location.reload();
+}
+
+// 3. AMBIL DATA DARI SUPABASE
 async function loadData() {
+    if (!supabase) return;
+
     try {
-        let { data, error } = await supabase.from("tirto_data").select("*");
+        const { data, error } = await supabase.from("tirto_data").select("*");
         if (error) throw error;
 
         globalData = data.map(x => ({
@@ -271,33 +274,62 @@ async function loadData() {
         filteredData = [...globalData];
         render(filteredData);
     } catch (err) {
-        console.error("Gagal load data:", err);
+        console.error("Gagal load data:", err.message);
     }
 }
 
+// 4. TAMPILAN TABEL (MENYESUAIKAN JUMLAH KOLOM)
 function render(data) {
+    const headTabel = document.getElementById("headTabel");
     const bodyTabel = document.getElementById("bodyTabel");
-    if(!bodyTabel) return;
+    if (!bodyTabel || !headTabel) return;
+
+    // Header Tabel (Pastikan jumlah kolom sama dengan isi tabel di bawah)
+    headTabel.innerHTML = `
+        <tr>
+            <th>No</th>
+            <th>Konsumen</th>
+            <th>Alamat</th>
+            <th>Pemakaian</th>
+            <th>Tagihan</th>
+            <th>Status</th>
+        </tr>`;
+
+    if (data.length === 0) {
+        bodyTabel.innerHTML = `<tr><td colspan="6" style="text-align:center;">Tidak ada data ditemukan</td></tr>`;
+        return;
+    }
 
     let html = "";
     data.forEach((row, i) => {
         let lama = Number(row["Awal Meter"] || 0);
         let sekarang = Number(row["Meter Sekarang"] || lama);
-        let tarif = (row["Tipe"] || "").toLowerCase().includes("niaga") ? 800 : 500;
-        let tagihan = (sekarang - lama) * tarif;
+        let pakai = sekarang - lama;
+        if (pakai < 0) pakai = 0;
+
+        let tipe = (row["Tipe"] || "").toLowerCase();
+        let tarif = tipe.includes("niaga") ? 800 : (tipe.includes("sosial") ? 0 : 500);
+        let tagihan = pakai * tarif;
         
-        html += `<tr>
-            <td>${row["No"] || i+1}</td>
-            <td>${row["Konsumen"]}</td>
-            <td>${row["Alamat"]}</td>
-            <td>${tagihan.toLocaleString()}</td>
-            <td>${row["Kolektor"] || "-"}</td>
-        </tr>`;
+        let bayar = Number(row["Bayar"] || 0);
+        let sisa = tagihan - bayar;
+        let klsStatus = sisa <= 0 ? "status-lunas" : "status-belum";
+        let teksStatus = sisa <= 0 ? "Lunas" : "Belum Bayar";
+
+        html += `
+            <tr>
+                <td>${row["No"] || i + 1}</td>
+                <td>${row["Konsumen"]}</td>
+                <td>${row["Alamat"]}</td>
+                <td>${pakai} m³</td>
+                <td>Rp ${tagihan.toLocaleString()}</td>
+                <td class="${klsStatus}">${teksStatus}</td>
+            </tr>`;
     });
     bodyTabel.innerHTML = html;
 }
 
-// Jalankan otomatis saat web dibuka
+// Jalankan saat halaman dibuka
 window.onload = function() {
     let savedRole = localStorage.getItem("role");
     if (savedRole) {
