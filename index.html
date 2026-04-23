@@ -198,164 +198,72 @@ let role = "";
 let globalData = [];
 let filteredData = [];
 
-// LOGIN
+// --- 1. FUNGSI LOGIN ---
 function login(){
-alert("Login ditekan"); // TEST
-let user = username.value.trim();
-let pass = password.value.trim();
+    let user = document.getElementById("username").value.trim();
+    let pass = document.getElementById("password").value.trim();
 
-if(user==="Admin" && pass==="1234"){
-role="admin";
-localStorage.setItem("role","admin");
-masuk();
-
-}
-else if(user==="kolektor" && pass==="1234"){
-role="kolektor";
-localStorage.setItem("role","kolektor");
-masuk();
-
-}
-else{
-alert("Username / Password salah!");
-}
+    if(user === "Admin" && pass === "1234"){
+        role = "admin";
+        localStorage.setItem("role", "admin");
+        masuk();
+    }
+    else if(user === "kolektor" && pass === "1234"){
+        role = "kolektor";
+        localStorage.setItem("role", "kolektor");
+        masuk();
+    }
+    else {
+        alert("Username / Password salah!");
+    }
 }
 
 function masuk(){
-
-loginBox.style.display="none";
-
-if(role==="admin"){
-adminPanel.style.display="block";
-}
-
-if(role==="kolektor"){
-kolektorPanel.style.display="block";
-}
-
-loadData();
+    document.getElementById("loginBox").style.display = "none";
+    
+    if(role === "admin"){
+        document.getElementById("adminPanel").style.display = "block";
+    }
+    if(role === "kolektor"){
+        document.getElementById("kolektorPanel").style.display = "block";
+    }
+    loadData();
 }
 
 function logout(){
-localStorage.removeItem("role");
-location.reload();
+    localStorage.removeItem("role");
+    location.reload();
 }
 
-// SAAT BUKA
-window.onload=function(){
-
-
-let r = localStorage.getItem("role");
-
-if(r){
-role=r;
-masuk();
-}else{
-loadData();
-}
-}
-
-// UPLOAD CEPAT
-function uploadCSV(){
-
-let file = csvFile.files[0];
-
-if(!file){
-alert("Pilih file CSV");
-return;
-}
-
-Papa.parse(file,{
-header:true,
-skipEmptyLines:true,
-worker:true,
-fastMode:true,
-
-complete:function(res){
-
-globalData = res.data;
-filteredData = [...globalData];
-
-localStorage.setItem(
-"tirtoData",
-JSON.stringify(globalData)
-);
-
-isiKolektor();
-render(filteredData);
-
-alert("Upload berhasil : "+globalData.length+" data");
-}
-});
-}
-
-// LOAD DATA
+// --- 2. DATA MANAGEMENT ---
 async function loadData(){
+    let { data, error } = await supabase
+        .from("tirto_data")
+        .select("*");
 
-let { data, error } = await supabase
-.from("tirto_data")
-.select("*");
+    if(error){
+        console.error("Gagal ambil data:", error);
+        return;
+    }
 
-if(error){
-alert("Gagal ambil data");
-console.log(error);
-return;
+    globalData = data.map(x => ({
+        "No": x.no,
+        "Konsumen": x.konsumen,
+        "Alamat": x.alamat,
+        "Blok": x.blok,
+        "Tipe": x.tipe,
+        "Kolektor": x.kolektor,
+        "Awal Meter": x.meter_awal,
+        "Meter Sekarang": x.meter_akhir,
+        "Bayar": x.bayar || 0
+    }));
+
+    filteredData = [...globalData];
+    isiKolektor();
+    render(filteredData);
 }
 
-globalData = data.map(x => ({
-"No": x.no,
-"Konsumen": x.konsumen,
-"Alamat": x.alamat,
-"Blok": x.blok,
-"Tipe": x.tipe,
-"Kolektor": x.kolektor,
-"Awal Meter": x.meter_awal,
-"Meter Sekarang": x.meter_akhir,
-"Input Meter": x.input_meter,
-"Pemakaian": x.pemakaian,
-"Tagihan": x.tagihan,
-"Status": x.status,
-"Bayar": x.bayar,
-"Sisa": x.sisa
-}));
-
-filteredData = [...globalData];
-
-isiKolektor();
-render(filteredData);
-}
-// FILTER KOLEKTOR
-function isiKolektor(){
-
-let list = [...new Set(globalData.map(x=>x["Kolektor"]||""))];
-
-filterKolektor.innerHTML =
-'<option value="">-- Pilih Nama Kolektor --</option>';
-
-list.forEach(nama=>{
-if(nama!=""){
-filterKolektor.innerHTML +=
-`<option value="${nama}">${nama}</option>`;
-}
-});
-}
-
-function pilihKolektor(){
-
-let nama = filterKolektor.value;
-
-if(nama===""){
-filteredData = globalData;
-}else{
-filteredData =
-globalData.filter(x=>x["Kolektor"]===nama);
-}
-
-render(filteredData);
-}
-
-// RENDER CEPAT
-// RENDER DATA
+// --- 3. TAMPILAN (RENDER) ---
 function render(data) {
     const headTabel = document.getElementById("headTabel");
     const bodyTabel = document.getElementById("bodyTabel");
@@ -365,25 +273,16 @@ function render(data) {
         return;
     }
 
-    // 1. ATUR HEADER BERDASARKAN ROLE
+    // Header Tabel
     let headerHtml = "";
     if (role === "admin" || role === "kolektor") {
-        headerHtml = `
-            <tr>
-                <th>No</th><th>Konsumen</th><th>Alamat</th><th>Blok</th><th>Kolektor</th>
-                <th>Meter Awal</th><th>Meter Akhir (Input)</th><th>Pemakaian</th><th>Tagihan</th>
-                <th>Status</th><th>Bayar</th><th>Sisa</th>
-            </tr>`;
+        headerHtml = `<tr><th>No</th><th>Konsumen</th><th>Alamat</th><th>Blok</th><th>Kolektor</th><th>Meter Awal</th><th>Meter Akhir</th><th>Pemakaian</th><th>Tagihan</th><th>Status</th><th>Bayar</th><th>Sisa</th></tr>`;
     } else {
-        headerHtml = `
-            <tr>
-                <th>No</th><th>Konsumen</th><th>Alamat</th><th>Blok</th>
-                <th>Kolektor</th><th>Pemakaian</th><th>Tagihan</th><th>Status</th>
-            </tr>`;
+        headerHtml = `<tr><th>No</th><th>Konsumen</th><th>Alamat</th><th>Blok</th><th>Kolektor</th><th>Pemakaian</th><th>Tagihan</th><th>Status</th></tr>`;
     }
     headTabel.innerHTML = headerHtml;
 
-    // 2. ATUR ISI TABEL
+    // Isi Tabel
     let html = "";
     data.forEach((row, i) => {
         let lama = Number(row["Awal Meter"] || 0);
@@ -391,251 +290,83 @@ function render(data) {
         let pakai = sekarang - lama;
         if (pakai < 0) pakai = 0;
 
-        // TARIF BERDASARKAN TIPE
         let tipe = (row["Tipe"] || "").toLowerCase();
-        let tarif = 0;
-        if (tipe.includes("rumah")) tarif = 500;
-        else if (tipe.includes("niaga")) tarif = 800;
-        else if (tipe.includes("sosial")) tarif = 0;
+        let tarif = tipe.includes("niaga") ? 800 : (tipe.includes("sosial") ? 0 : 500);
 
         let tagihan = pakai * tarif;
         let bayar = Number(row["Bayar"] || 0);
         let sisa = tagihan - bayar;
-        let status = sisa <= 0 ? "Lunas" : "Belum Lunas";
         let klsStatus = sisa <= 0 ? "status-lunas" : "status-belum";
+        let teksStatus = sisa <= 0 ? "Lunas" : "Belum Bayar";
 
         if (role === "admin" || role === "kolektor") {
-            html += `
-                <tr>
-                    <td>${row["No"] || i + 1}</td>
-                    <td>${row["Konsumen"] || ""}</td>
-                    <td>${row["Alamat"] || ""}</td>
-                    <td>${row["Blok"] || ""}</td>
-                    <td>${row["Kolektor"] || ""}</td>
-                    <td>${lama}</td>
-                    <td>
-                        <input type="number" value="${sekarang}" 
-                        onchange="ubahMeter('${row["No"]}', this.value)" 
-                        style="width:80px; padding:4px;">
-                    </td>
-                    <td>${pakai} m³</td>
-                    <td>Rp ${tagihan.toLocaleString()}</td>
-                    <td class="${klsStatus}">${status}</td>
-                    <td><input type="number" value="${bayar}" 
-                        onchange="ubahBayar('${row["No"]}', this.value)" 
-                        style="width:80px; padding:4px;"></td>
-                    <td>Rp ${sisa.toLocaleString()}</td>
-                </tr>`;
+            html += `<tr>
+                <td>${row["No"] || i + 1}</td>
+                <td>${row["Konsumen"]}</td>
+                <td>${row["Alamat"]}</td>
+                <td>${row["Blok"]}</td>
+                <td>${row["Kolektor"]}</td>
+                <td>${lama}</td>
+                <td><input type="number" value="${sekarang}" onchange="updateRow('${row["No"]}', 'Meter Sekarang', this.value)" style="width:70px"></td>
+                <td>${pakai}</td>
+                <td>${tagihan.toLocaleString()}</td>
+                <td class="${klsStatus}">${teksStatus}</td>
+                <td><input type="number" value="${bayar}" onchange="updateRow('${row["No"]}', 'Bayar', this.value)" style="width:70px"></td>
+                <td>${sisa.toLocaleString()}</td>
+            </tr>`;
         } else {
-            html += `
-                <tr>
-                    <td>${row["No"] || i + 1}</td>
-                    <td>${row["Konsumen"] || ""}</td>
-                    <td>${row["Alamat"] || ""}</td>
-                    <td>${row["Blok"] || ""}</td>
-                    <td>${row["Kolektor"] || ""}</td>
-                    <td>${pakai} m³</td>
-                    <td>Rp ${tagihan.toLocaleString()}</td>
-                    <td class="${klsStatus}">${status}</td>
-                </tr>`;
+            html += `<tr>
+                <td>${row["No"] || i + 1}</td>
+                <td>${row["Konsumen"]}</td>
+                <td>${row["Alamat"]}</td>
+                <td>${row["Blok"]}</td>
+                <td>${row["Kolektor"]}</td>
+                <td>${pakai}</td>
+                <td>${tagihan.toLocaleString()}</td>
+                <td class="${klsStatus}">${teksStatus}</td>
+            </tr>`;
         }
     });
-
     bodyTabel.innerHTML = html;
 }
 
-// FUNGSI PEMBANTU UNTUK UPDATE DATA DI TABEL
-function ubahMeter(no, nilai) {
+// --- 4. FITUR TAMBAHAN ---
+function updateRow(no, kolom, nilai) {
     let index = globalData.findIndex(x => x["No"] == no);
     if (index !== -1) {
-        globalData[index]["Meter Sekarang"] = Number(nilai);
+        globalData[index][kolom] = Number(nilai);
         render(filteredData);
     }
 }
 
-function ubahBayar(no, nilai) {
-    let index = globalData.findIndex(x => x["No"] == no);
-    if (index !== -1) {
-        globalData[index]["Bayar"] = Number(nilai);
-        render(filteredData);
-    }
-}
-
-// 🔥 TAMBAHAN TARIF
-let tipe = (row["Tipe"] || "").toLowerCase();
-
-let tarif = 0;
-
-if (tipe === "rumah tangga") {
-    tarif = 500;
-} 
-else if (tipe === "niaga") {
-    tarif = 800;
-} 
-else if (tipe === "sosial") {
-    tarif = 0;
-}
-
-// 🔥 HITUNG TAGIHAN (HANYA SEKALI)
-let tagihan = pakai * tarif;
-
-let bayar = Number(row["Bayar"] || 0);
-let sisa = tagihan - bayar;
-let status = sisa <= 0 ? "Sudah Bayar" : "Belum Bayar";
-let klsStatus = sisa <= 0 ? "status-lunas" : "status-belum";
-}
-// hitung otomatis tagihan
-
-        let bayar = Number(row["Bayar"] || 0);
-        let sisa = tagihan - bayar;
-        let status = sisa <= 0 ? "Sudah Bayar" : "Belum Bayar";
-        let klsStatus = sisa <= 0 ? "status-lunas" : "status-belum";
-
-        if (role === "admin" || role === "kolektor") {
-            // Tampilan Lengkap untuk Admin/Kolektor
-            html += `
-                <tr>
-                    <td>${row["No"] || i + 1}</td>
-                    <td>${row["Konsumen"] || ""}</td>
-                    <td>${row["Alamat"] || ""}</td>
-                    <td>${row["Blok"] || ""}</td>
-                    <td>${row["Kolektor"] || ""}</td>
-                    <td>${lama}</td>
-                    <td>${sekarang}</td>
-                    <td>${pakai}</td>
-                    <td>${tagihan.toLocaleString()}</td>
-                    <td class="${klsStatus}">${status}</td>
-                    <td>${bayar.toLocaleString()}</td>
-                    <td>${sisa.toLocaleString()}</td>
-                </tr>`;
-        } else {
-            // Tampilan Terbatas untuk Publik
-            html += `
-                <tr>
-                    <td>${row["No"] || i + 1}</td>
-                    <td>${row["Konsumen"] || ""}</td>
-                    <td>${row["Alamat"] || ""}</td>
-                    <td>${row["Blok"] || ""}</td>
-                    <td>${row["Kolektor"] || ""}</td>
-                    <td>${pakai}</td>
-                    <td>${tagihan.toLocaleString()}</td>
-                    <td class="${klsStatus}">${status}</td>
-                </tr>`;
-        }
+function isiKolektor(){
+    let list = [...new Set(globalData.map(x => x["Kolektor"] || ""))];
+    let select = document.getElementById("filterKolektor");
+    if(!select) return;
+    select.innerHTML = '<option value="">-- Pilih Nama Kolektor --</option>';
+    list.forEach(nama => {
+        if(nama) select.innerHTML += `<option value="${nama}">${nama}</option>`;
     });
-
-    bodyTabel.innerHTML = html;
 }
 
-
-// UBAH DATA
-function ubah(no,kolom,nilai){
-
-let index =
-globalData.findIndex(x=>x["No"]==no);
-
-if(index!=-1){
-globalData[index][kolom]=nilai;
-}
-}
-
-// SIMPAN
-function simpanPerubahan(){
-
-localStorage.setItem(
-"tirtoData",
-JSON.stringify(globalData)
-);
-
-render(filteredData);
-
-alert("Perubahan berhasil disimpan");
-}
-
-// SEARCH
 function cariData(){
-
-let key = cari.value.toLowerCase();
-
-filteredData =
-globalData.filter(x=>
-
-(x["Konsumen"]||"").toLowerCase().includes(key) ||
-(x["Alamat"]||"").toLowerCase().includes(key) ||
-(x["Blok"]||"").toLowerCase().includes(key) ||
-(x["Kolektor"]||"").toLowerCase().includes(key)
-
-);
-
-render(filteredData);
+    let key = document.getElementById("cari").value.toLowerCase();
+    filteredData = globalData.filter(x => 
+        (x["Konsumen"]||"").toLowerCase().includes(key) || 
+        (x["Alamat"]||"").toLowerCase().includes(key)
+    );
+    render(filteredData);
 }
 
-// DOWNLOAD CSV
-function downloadCSV(){
-
-if(globalData.length===0){
-alert("Data kosong");
-return;
-}
-
-let csv = Papa.unparse(globalData);
-
-let blob = new Blob([csv],{
-type:"text/csv;charset=utf-8;"
-});
-
-let link = document.createElement("a");
-link.href = URL.createObjectURL(blob);
-link.download = "Data_Tagihan.csv";
-link.click();
-}
-
-// TEMPLATE CSV
-function downloadTemplate(){
-
-let csv =
-`No,Konsumen,Alamat,Blok,Tipe,Kolektor,Awal Meter,Meter Sekarang,Input Meter,Pemakaian,Tagihan,Bayar,Sisa,Status
-1,Budi,Ngebruk,A1,Rumah,Slamet,100,110,0,10,5000,0,5000,Belum Bayar
-2,Siti,Ngebruk,A2,Rumah,Rudi,80,95,0,15,7500,7500,0,Sudah Bayar`;
-
-let blob = new Blob([csv],{
-type:"text/csv;charset=utf-8;"
-});
-
-let link = document.createElement("a");
-link.href = URL.createObjectURL(blob);
-link.download = "Template_Tirto_Lengkap.csv";
-link.click();
-}
-
-// HAPUS
-async function hapusCSV(){
-
-if(!confirm("Yakin hapus semua data?")) return;
-
-let { error } = await supabase
-.from("tirto_data")
-.delete()
-.neq("no", 0);
-
-if(error){
-alert("Gagal hapus data");
-console.log(error);
-return;
-}
-
-globalData = [];
-filteredData = [];
-render([]);
-
-alert("Data berhasil dihapus");
-}
-
-
-// LOAD DATA SAAT HALAMAN DIBUKA
-window.addEventListener("DOMContentLoaded", () => {
-    loadData();
-});
+window.onload = function(){
+    let r = localStorage.getItem("role");
+    if(r) {
+        role = r;
+        masuk();
+    } else {
+        loadData();
+    }
+};
 </script>
 
 </body>
