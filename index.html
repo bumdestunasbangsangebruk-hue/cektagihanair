@@ -110,12 +110,10 @@ overflow-x:auto;
 
 <!-- LOGIN -->
 <div class="card" id="loginBox">
-<h3>🔐 Login Sistem</h3>
-
-<input type="text" id="username" placeholder="Username">
-<input type="password" id="password" placeholder="Password">
-
-<button class="btn" onclick="login()">Login</button>
+    <h3>🔐 Login Sistem</h3>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button class="btn" onclick="login()">Login</button>
 </div>
 
 <!-- HEADER -->
@@ -157,9 +155,18 @@ overflow-x:auto;
 
 <!-- TABLE -->
 <div class="card wrap">
-<table>
-<thead id="headTabel">
-    </thead>
+    <table>
+        <thead id="headTabel"></thead>
+        
+        <tbody id="bodyTabel">
+            <tr>
+                <td colspan="12" style="text-align:center;padding:20px;">
+                    Memuat data...
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 
 <tr>
 <th>No</th>
@@ -198,25 +205,42 @@ let role = "";
 let globalData = [];
 let filteredData = [];
 
-// --- 1. FUNGSI LOGIN ---
-function login(){
-    let user = document.getElementById("username").value.trim();
-    let pass = document.getElementById("password").value.trim();
+// --- TARUH DI SINI ---
 
-    if(user === "Admin" && pass === "1234"){
+function login() {
+    console.log("Mencoba Login..."); 
+
+    // Kita ambil elemen secara spesifik menggunakan ID
+    const userEl = document.getElementById("username");
+    const passEl = document.getElementById("password");
+
+    // Validasi apakah kotak input ada di HTML
+    if (!userEl || !passEl) {
+        alert("Sistem Error: Kotak Username/Password tidak ditemukan di HTML. Pastikan id='username' sudah benar.");
+        return;
+    }
+
+    let user = userEl.value.trim();
+    let pass = passEl.value.trim();
+
+    if (user === "Admin" && pass === "1234") {
+        alert("Login Admin Berhasil!"); // Untuk tes respon
         role = "admin";
         localStorage.setItem("role", "admin");
         masuk();
-    }
-    else if(user === "kolektor" && pass === "1234"){
+    } 
+    else if (user === "kolektor" && pass === "1234") {
+        alert("Login Kolektor Berhasil!");
         role = "kolektor";
         localStorage.setItem("role", "kolektor");
         masuk();
-    }
+    } 
     else {
-        alert("Username / Password salah!");
+        alert("Username atau Password salah!");
     }
 }
+
+// --- LANJUT KE FUNGSI BERIKUTNYA (masuk, loadData, dll) ---
 
 function masuk(){
     document.getElementById("loginBox").style.display = "none";
