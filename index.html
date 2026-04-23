@@ -197,20 +197,14 @@ Belum ada data
 </div>
 
 <script>
+// 1. Inisialisasi - Pastikan hanya ada ini di bagian atas
 const SUPABASE_URL = "https://ugezkavpzvcbwxmqgbrx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_2_2AqhV53QcVf8CQtuQJ9A_9Ll2JNir";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let supabase;
 let role = "";
-let globalData = [];
 
-// Inisialisasi Supabase
-try {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-} catch (e) {
-    console.error("Library Supabase belum siap.");
-}
-
+// 2. Fungsi Login
 function login() {
     const user = document.getElementById("username").value.trim();
     const pass = document.getElementById("password").value.trim();
@@ -229,90 +223,84 @@ function login() {
 }
 
 function masuk() {
-    document.getElementById("loginBox").style.display = "none";
+    const lb = document.getElementById("loginBox");
+    if(lb) lb.style.display = "none";
     
-    // Tampilkan panel yang sesuai
-    const adminPanel = document.getElementById("adminPanel");
-    const kolektorPanel = document.getElementById("kolektorPanel");
-    
-    if (role === "admin" && adminPanel) adminPanel.style.display = "block";
-    if (role === "kolektor" && kolektorPanel) kolektorPanel.style.display = "block";
+    // Tampilkan panel sesuai role
+    if (role === "admin") document.getElementById("adminPanel").style.display = "block";
+    if (role === "kolektor") document.getElementById("kolektorPanel").style.display = "block";
 
-    // Beri jeda sedikit agar inisialisasi selesai sebelum tarik data
-    setTimeout(loadData, 500);
+    loadData();
 }
 
 function logout() {
     localStorage.removeItem("role");
-    location.reload(); // Ini akan mengembalikan Mas ke layar login
+    location.reload();
 }
 
+// 3. Ambil Data
 async function loadData() {
-    if (!supabase || !supabase.from) {
-        console.log("Menunggu koneksi...");
-        return;
-    }
-
     try {
+        console.log("Sedang mengambil data...");
         const { data, error } = await supabase.from("tirto_data").select("*");
         if (error) throw error;
-
-        globalData = data;
-        render(globalData);
+        render(data);
     } catch (err) {
-        console.error("Gagal ambil data:", err.message);
+        console.error("Gagal load data:", err.message);
     }
 }
 
+// 4. Render Tabel (Dibuat Pas 6 Kolom)
 function render(data) {
     const head = document.getElementById("headTabel");
     const body = document.getElementById("bodyTabel");
 
-    // Samakan jumlah kolom header dan body (6 kolom)
+    // Header Tabel
     head.innerHTML = `
         <tr>
-            <th>No</th>
-            <th>Konsumen</th>
-            <th>Alamat</th>
-            <th>Tipe</th>
-            <th>Tagihan</th>
-            <th>Status</th>
+            <th style="width:5%">No</th>
+            <th style="width:25%">Nama Konsumen</th>
+            <th style="width:20%">Alamat</th>
+            <th style="width:15%">Pemakaian</th>
+            <th style="width:20%">Total Tagihan</th>
+            <th style="width:15%">Status</th>
         </tr>`;
 
     let html = "";
     data.forEach((row, i) => {
-        let lama = Number(row.meter_awal || 0);
-        let baru = Number(row.meter_akhir || lama);
+        let m1 = Number(row.meter_awal || 0);
+        let m2 = Number(row.meter_akhir || m1);
+        let pakai = m2 - m1;
         let tarif = (row.tipe || "").toLowerCase().includes("niaga") ? 800 : 500;
-        let total = (baru - lama) * tarif;
+        let total = pakai * tarif;
         
-        let bayar = Number(row.bayar || 0);
-        let sisa = total - bayar;
+        let sisa = total - Number(row.bayar || 0);
         let kls = sisa <= 0 ? "status-lunas" : "status-belum";
+        let teks = sisa <= 0 ? "Lunas" : "Belum";
 
         html += `
             <tr>
-                <td>${i + 1}</td>
+                <td style="text-align:center">${i + 1}</td>
                 <td>${row.konsumen || '-'}</td>
                 <td>${row.alamat || '-'}</td>
-                <td>${row.tipe || '-'}</td>
-                <td>Rp ${total.toLocaleString()}</td>
-                <td class="${kls}">${sisa <= 0 ? 'Lunas' : 'Belum'}</td>
+                <td style="text-align:center">${pakai} m³</td>
+                <td style="text-align:right">Rp ${total.toLocaleString()}</td>
+                <td style="text-align:center"><span class="${kls}">${teks}</span></td>
             </tr>`;
     });
     body.innerHTML = html;
 }
 
+// Jalankan otomatis
 window.onload = function() {
-    const savedRole = localStorage.getItem("role");
-    if (savedRole) {
-        role = savedRole;
+    const r = localStorage.getItem("role");
+    if (r) {
+        role = r;
         masuk();
     } else {
         loadData();
     }
 };
 </script>
-
 </body>
 </html>
