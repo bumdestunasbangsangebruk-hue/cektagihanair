@@ -109,15 +109,13 @@ overflow-x:auto;
 <!-- LOGIN -->
 <div class="card" id="loginBox">
 <h3>🔐 Login Sistem</h3>
-
 <input type="text" id="username" placeholder="Username" />
 <input type="password" id="password" placeholder="Password" />
-
 <button class="btn" onclick="login()">Login</button>
 </div>
 
 <!-- HEADER -->
-<div class="header">
+<div class="header" style="display:none;" id="headerSection">
 <img src="image_916921.png" class="logo" />
 <h2 style="margin:0;">TIRTO LANGGENG</h2>
 <p style="margin:5px 0 0 0;">BUMDes Tunas Bangsa Ngebruk</p>
@@ -126,9 +124,7 @@ overflow-x:auto;
 <!-- ADMIN PANEL -->
 <div class="card hidden" id="adminPanel">
 <h3>🔓 Mode Admin</h3>
-
 <input type="file" id="csvFile" accept=".csv" />
-
 <button class="btn" onclick="uploadCSV()">Upload CSV</button>
 <button class="orange" onclick="downloadTemplate()">Template CSV</button>
 <button class="orange" onclick="downloadCSV()">Download CSV</button>
@@ -139,11 +135,9 @@ overflow-x:auto;
 <!-- KOLEKTOR PANEL -->
 <div class="card hidden" id="kolektorPanel">
 <h3>💰 Mode Kolektor</h3>
-
 <select id="filterKolektor" onchange="pilihKolektor()">
 <option value="">-- Pilih Nama Kolektor --</option>
 </select>
-
 <button class="green" onclick="simpanPerubahan()">💾 Simpan Perubahan</button>
 <button class="red" onclick="logout()">Logout</button>
 </div>
@@ -174,7 +168,6 @@ overflow-x:auto;
 <th>Sisa</th>
 </tr>
 </thead>
-
 <tbody id="bodyTabel">
 <tr>
 <td colspan="13" style="text-align:center;padding:20px;">Belum ada data</td>
@@ -184,11 +177,15 @@ overflow-x:auto;
 </div>
 
 <script>
+const SUPABASE_URL = "https://ugezkavpzvcbwxmqgbrx.supabase.co";
+const SUPABASE_KEY = "sb_publishable_2_2AqhV53QcVf8CQtuQJ9A_9Ll2JNir";
+const TABLE_NAME = "tirto_data"; // Pastikan tabel ini ada di database
+
 let role = "";
 let globalData = [];
 let filteredData = [];
 
-// LOGIN
+// Fungsi login sederhana
 function login() {
   let user = document.getElementById("username").value.trim();
   let pass = document.getElementById("password").value.trim();
@@ -206,8 +203,9 @@ function login() {
   }
 }
 
-function masuk() {
+async function masuk() {
   document.getElementById("loginBox").style.display = "none";
+  document.getElementById("headerSection").style.display = "block";
 
   if (role === "admin") {
     document.getElementById("adminPanel").style.display = "block";
@@ -215,7 +213,12 @@ function masuk() {
     document.getElementById("kolektorPanel").style.display = "block";
   }
 
-  loadData();
+  // Muat data dari Supabase
+  globalData = await fetchData();
+  filteredData = [...globalData];
+
+  isiKolektor();
+  render(filteredData);
 }
 
 function logout() {
@@ -223,18 +226,62 @@ function logout() {
   location.reload();
 }
 
-// Saat Load
-window.onload = function () {
+// Saat halaman dimuat
+window.onload = async () => {
   let r = localStorage.getItem("role");
   if (r) {
     role = r;
-    masuk();
+    await masuk();
   } else {
-    loadData();
+    document.getElementById("loginBox").style.display = "block";
+    document.getElementById("headerSection").style.display = "none";
+    document.getElementById("adminPanel").style.display = "none";
+    document.getElementById("kolektorPanel").style.display = "none";
   }
 };
 
-// UPLOAD CSV
+// Ambil data dari Supabase
+async function fetchData() {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE_NAME}`, {
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": `Bearer ${SUPABASE_KEY}`,
+      "Accept": "application/json",
+    },
+  });
+  if (!response.ok) {
+    alert("Gagal mengambil data dari Supabase");
+    return [];
+  }
+  const data = await response.json();
+  return data;
+}
+
+// Simpan semua data ke Supabase (hapus dan insert ulang)
+async function saveData() {
+  // Hapus semua data lama
+  await fetch(`${SUPABASE_URL}/rest/v1/${TABLE_NAME}`, {
+    method: "DELETE",
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": `Bearer ${SUPABASE_KEY}`,
+    },
+  });
+  // Masukkan data baru
+  for (const item of globalData) {
+    await fetch(`${SUPABASE_URL}/rest/v1/${TABLE_NAME}`, {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(item),
+    });
+  }
+}
+
+// Upload CSV
 function uploadCSV() {
   let file = document.getElementById("csvFile").files[0];
   if (!file) {
@@ -246,12 +293,12 @@ function uploadCSV() {
     header: true,
     skipEmptyLines: true,
     worker: true,
-    fastMode: true,
-    complete: function (res) {
+    complete: async function (res) {
       globalData = res.data;
       filteredData = [...globalData];
 
-      localStorage.setItem("tirtoData", JSON.stringify(globalData));
+      await saveData();
+
       isiKolektor();
       render(filteredData);
 
@@ -260,18 +307,15 @@ function uploadCSV() {
   });
 }
 
-// LOAD DATA
-function loadData() {
-  let data = localStorage.getItem("tirtoData");
-  if (data) {
-    globalData = JSON.parse(data);
-    filteredData = globalData;
-    isiKolektor();
-    render(filteredData);
-  }
+// Load data dari Supabase
+async function loadData() {
+  globalData = await fetchData();
+  filteredData = globalData;
+  isiKolektor();
+  render(filteredData);
 }
 
-// FILTER KOLEKTOR
+// Isi list Kolektor
 function isiKolektor() {
   let list = [...new Set(globalData.map((x) => x["Kolektor"] || ""))];
   document.getElementById("filterKolektor").innerHTML =
@@ -283,6 +327,7 @@ function isiKolektor() {
   });
 }
 
+// Pilih Kolektor filter
 function pilihKolektor() {
   let nama = document.getElementById("filterKolektor").value;
   if (nama === "") {
@@ -293,7 +338,7 @@ function pilihKolektor() {
   render(filteredData);
 }
 
-// RENDER DATA
+// Render data tabel
 function render(data) {
   const role = localStorage.getItem("role");
   const isAdminOrKolektor = role === "admin" || role === "kolektor";
@@ -320,11 +365,6 @@ function render(data) {
 
     let status = sisa <= 0 ? "Sudah Bayar" : "Belum Bayar";
 
-    // Role-based column visibility
-    let showAllColumns = isAdminOrKolektor;
-    let showLimitedColumns = role === "pengguna";
-
-    // Untuk pengguna umum, tampilkan kolom tertentu
     if (role === "pengguna") {
       html += `
 <tr>
@@ -336,33 +376,33 @@ function render(data) {
 <td>${row["Kolektor"] || ""}</td>
 <td>${lama}</td>
 <td>${sekarang}</td>
-<td></td> <!-- Meter Baru tidak perlu tampil -->
+<td></td>
 <td>${pakai}</td>
 <td>${tagihan}</td>
-<td class="${status === 'Sudah Bayar' ? 'status-lunas' : 'status-belum'}">${status}</td>
+<td class="${status==='Sudah Bayar'?'status-lunas':'status-belum'}">${status}</td>
 <td>${bayar}</td>
 <td>${sisa}</td>
 </tr>`;
     } else {
-      // Untuk admin dan kolektor, tampil semua kolom dan bisa edit
+      // Admin & Kolektor
       html += `
 <tr>
 <td>${row["No"] || i + 1}</td>
-<td contenteditable="${showAllColumns}" onblur="ubah(${row["No"]},'Konsumen',this.innerText)">${row["Konsumen"] || ""}</td>
-<td contenteditable="${showAllColumns}" onblur="ubah(${row["No"]},'Alamat',this.innerText)">${row["Alamat"] || ""}</td>
-<td contenteditable="${showAllColumns}" onblur="ubah(${row["No"]},'Blok',this.innerText)">${row["Blok"] || ""}</td>
+<td contenteditable="${isAdminOrKolektor}" onblur="ubah(${row["No"]},'Konsumen',this.innerText)">${row["Konsumen"] || ""}</td>
+<td contenteditable="${isAdminOrKolektor}" onblur="ubah(${row["No"]},'Alamat',this.innerText)">${row["Alamat"] || ""}</td>
+<td contenteditable="${isAdminOrKolektor}" onblur="ubah(${row["No"]},'Blok',this.innerText)">${row["Blok"] || ""}</td>
 <td>
-  <select ${showAllColumns ? "" : "disabled"} onchange="ubah(${row["No"]},'Tipe',this.value)">
+  <select ${isAdminOrKolektor ? "" : "disabled"} onchange="ubah(${row["No"]},'Tipe',this.value)">
     <option value="Rumah Tangga" ${row["Tipe"]==="Rumah Tangga"?"selected":""}>Rumah Tangga</option>
     <option value="Niaga" ${row["Tipe"]==="Niaga"?"selected":""}>Niaga</option>
     <option value="Sosial" ${row["Tipe"]==="Sosial"?"selected":""}>Sosial</option>
   </select>
 </td>
-<td contenteditable="${showAllColumns}" onblur="ubah(${row["No"]},'Kolektor',this.innerText)">${row["Kolektor"] || ""}</td>
+<td contenteditable="${isAdminOrKolektor}" onblur="ubah(${row["No"]},'Kolektor',this.innerText)">${row["Kolektor"] || ""}</td>
 <td>${lama}</td>
 <td>${sekarang}</td>
 <td>
-  <input type="number" min="0" value="${meter_baru}" ${showAllColumns ? "" : "disabled"} onchange="ubahMeterBaru(${row["No"]},this.value)">
+  <input type="number" min="0" value="${meter_baru}" ${isAdminOrKolektor ? "" : "disabled"} onchange="ubahMeterBaru(${row["No"]},this.value)">
 </td>
 <td>${pakai}</td>
 <td>${tagihan}</td>
@@ -391,14 +431,14 @@ function ubahMeterBaru(no, nilai) {
   }
 }
 
-// Simpan perubahan
-function simpanPerubahan() {
-  localStorage.setItem("tirtoData", JSON.stringify(globalData));
+// Simpan perubahan ke Supabase
+async function simpanPerubahan() {
+  await saveData();
   render(filteredData);
   alert("Perubahan berhasil disimpan");
 }
 
-// Cari data
+// Cari
 function cariData() {
   let key = document.getElementById("cari").value.toLowerCase();
   filteredData = globalData.filter(
@@ -426,9 +466,11 @@ function downloadCSV() {
   link.click();
 }
 
-// Download Template CSV
+// Download template CSV
 function downloadTemplate() {
-  let csv = `No,Konsumen,Alamat,Blok,Tipe,Kolektor,Meter Awal,Meter Akhir,Tagihan,Bayar\n1,Budi,Ngebruk,A1,Sosial,Slamet,100,110,5000,0\n2,Siti,Ngebruk,A2,Niaga,Rudi,80,95,7500,7500`;
+  let csv = `No,Konsumen,Alamat,Blok,Tipe,Kolektor,Meter Awal,Meter Akhir,Tagihan,Bayar
+1,Budi,Ngebruk,A1,Sosial,Slamet,100,110,5000,0
+2,Siti,Ngebruk,A2,Niaga,Rudi,80,95,7500,7500`;
   let blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   let link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
@@ -436,13 +478,21 @@ function downloadTemplate() {
   link.click();
 }
 
-// Hapus data
+// Hapus semua data
 function hapusCSV() {
   if (confirm("Yakin hapus semua data?")) {
     globalData = [];
     filteredData = [];
-    localStorage.removeItem("tirtoData");
-    render([]);
+    // Hapus dari Supabase
+    fetch(`${SUPABASE_URL}/rest/v1/${TABLE_NAME}`, {
+      method: "DELETE",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": `Bearer ${SUPABASE_KEY}`,
+      },
+    }).then(() => {
+      render([]);
+    });
   }
 }
 </script>
