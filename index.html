@@ -197,26 +197,24 @@ Belum ada data
 </div>
 
 <script>
+<script>
+// 1. Cukup tulis ini SEKALI saja di paling atas
 const SUPABASE_URL = "https://ugezkavpzvcbwxmqgbrx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_2_2AqhV53QcVf8CQtuQJ9A_9Ll2JNir";
-
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 let role = "";
 let globalData = [];
 let filteredData = [];
 
-// --- TARUH DI SINI ---
-
+// 2. Baru masukkan fungsi login (Pakai versi Logika Paksa tadi)
 function login() {
-    console.log("Mencoba Login..."); 
-
-    // Kita ambil elemen secara spesifik menggunakan ID
+    console.log("Tombol login ditekan");
     const userEl = document.getElementById("username");
     const passEl = document.getElementById("password");
 
-    // Validasi apakah kotak input ada di HTML
     if (!userEl || !passEl) {
-        alert("Sistem Error: Kotak Username/Password tidak ditemukan di HTML. Pastikan id='username' sudah benar.");
+        alert("Eror: ID username atau password tidak ditemukan di HTML!");
         return;
     }
 
@@ -224,13 +222,11 @@ function login() {
     let pass = passEl.value.trim();
 
     if (user === "Admin" && pass === "1234") {
-        alert("Login Admin Berhasil!"); // Untuk tes respon
         role = "admin";
         localStorage.setItem("role", "admin");
         masuk();
     } 
     else if (user === "kolektor" && pass === "1234") {
-        alert("Login Kolektor Berhasil!");
         role = "kolektor";
         localStorage.setItem("role", "kolektor");
         masuk();
@@ -239,8 +235,6 @@ function login() {
         alert("Username atau Password salah!");
     }
 }
-
-// --- LANJUT KE FUNGSI BERIKUTNYA (masuk, loadData, dll) ---
 
 function masuk(){
     document.getElementById("loginBox").style.display = "none";
