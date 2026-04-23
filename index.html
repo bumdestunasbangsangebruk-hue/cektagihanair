@@ -149,10 +149,21 @@ overflow-x:auto;
 </div>
 
 <!-- SEARCH -->
-<div class="card">
-<input type="text" id="cari" placeholder="Cari pelanggan..." onkeyup="cariData()">
+<div class="card" style="margin-bottom: 15px;">
+    <input type="text" id="cari" placeholder="Cari pelanggan..." onkeyup="cariData()" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
 </div>
 
+<div class="card" style="overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead id="headTabel" style="background-color: #f8f9fa;">
+            </thead>
+        <tbody id="bodyTabel">
+            <tr>
+                <td colspan="10" style="text-align:center; padding: 20px;">Memuat data...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 <!-- TABLE -->
 <div class="card wrap">
     <table>
@@ -197,12 +208,13 @@ Belum ada data
 </div>
 
 <script>
-// 1. Inisialisasi - Pastikan hanya ada ini di bagian atas
+// 1. Inisialisasi
 const SUPABASE_URL = "https://ugezkavpzvcbwxmqgbrx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_2_2AqhV53QcVf8CQtuQJ9A_9Ll2JNir";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let role = "";
+let globalData = [];
 
 // 2. Fungsi Login
 function login() {
@@ -218,7 +230,7 @@ function login() {
         localStorage.setItem("role", "kolektor");
         masuk();
     } else {
-        alert("Username/Password Salah!");
+        alert("Username atau Password salah!");
     }
 }
 
@@ -226,9 +238,9 @@ function masuk() {
     const lb = document.getElementById("loginBox");
     if(lb) lb.style.display = "none";
     
-    // Tampilkan panel sesuai role
-    if (role === "admin") document.getElementById("adminPanel").style.display = "block";
-    if (role === "kolektor") document.getElementById("kolektorPanel").style.display = "block";
+    // Munculkan panel admin jika ada
+    const ap = document.getElementById("adminPanel");
+    if(ap && role === "admin") ap.style.display = "block";
 
     loadData();
 }
@@ -241,29 +253,31 @@ function logout() {
 // 3. Ambil Data
 async function loadData() {
     try {
-        console.log("Sedang mengambil data...");
         const { data, error } = await supabase.from("tirto_data").select("*");
         if (error) throw error;
-        render(data);
+        
+        globalData = data;
+        render(globalData);
     } catch (err) {
-        console.error("Gagal load data:", err.message);
+        console.error("Gagal ambil data:", err.message);
     }
 }
 
-// 4. Render Tabel (Dibuat Pas 6 Kolom)
+// 4. Render Tabel (Dibuat Pas & Rapi)
 function render(data) {
     const head = document.getElementById("headTabel");
     const body = document.getElementById("bodyTabel");
 
-    // Header Tabel
+    // Header tabel
     head.innerHTML = `
-        <tr>
-            <th style="width:5%">No</th>
-            <th style="width:25%">Nama Konsumen</th>
-            <th style="width:20%">Alamat</th>
-            <th style="width:15%">Pemakaian</th>
-            <th style="width:20%">Total Tagihan</th>
-            <th style="width:15%">Status</th>
+        <tr style="border-bottom: 2px solid #ddd; text-align: left;">
+            <th style="padding: 10px;">No</th>
+            <th style="padding: 10px;">Konsumen</th>
+            <th style="padding: 10px;">Alamat</th>
+            <th style="padding: 10px;">Blok</th>
+            <th style="padding: 10px;">Pemakaian</th>
+            <th style="padding: 10px;">Tagihan</th>
+            <th style="padding: 10px; text-align: center;">Status</th>
         </tr>`;
 
     let html = "";
@@ -274,24 +288,35 @@ function render(data) {
         let tarif = (row.tipe || "").toLowerCase().includes("niaga") ? 800 : 500;
         let total = pakai * tarif;
         
-        let sisa = total - Number(row.bayar || 0);
-        let kls = sisa <= 0 ? "status-lunas" : "status-belum";
-        let teks = sisa <= 0 ? "Lunas" : "Belum";
+        let bayar = Number(row.bayar || 0);
+        let sisa = total - bayar;
+        let kls = sisa <= 0 ? "background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px;" : "background: #f8d7da; color: #721c24; padding: 4px 8px; border-radius: 4px;";
+        let teks = sisa <= 0 ? "Lunas" : "Belum Bayar";
 
         html += `
-            <tr>
-                <td style="text-align:center">${i + 1}</td>
-                <td>${row.konsumen || '-'}</td>
-                <td>${row.alamat || '-'}</td>
-                <td style="text-align:center">${pakai} m³</td>
-                <td style="text-align:right">Rp ${total.toLocaleString()}</td>
-                <td style="text-align:center"><span class="${kls}">${teks}</span></td>
+            <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 10px;">${i + 1}</td>
+                <td style="padding: 10px;"><b>${row.konsumen || '-'}</b></td>
+                <td style="padding: 10px;">${row.alamat || '-'}</td>
+                <td style="padding: 10px;">${row.blok || '-'}</td>
+                <td style="padding: 10px;">${pakai} m³</td>
+                <td style="padding: 10px;">Rp ${total.toLocaleString()}</td>
+                <td style="padding: 10px; text-align: center;"><span style="${kls}">${teks}</span></td>
             </tr>`;
     });
     body.innerHTML = html;
 }
 
-// Jalankan otomatis
+// Fungsi Cari
+function cariData() {
+    const k = document.getElementById("cari").value.toLowerCase();
+    const hasil = globalData.filter(x => 
+        (x.konsumen || "").toLowerCase().includes(k) || 
+        (x.alamat || "").toLowerCase().includes(k)
+    );
+    render(hasil);
+}
+
 window.onload = function() {
     const r = localStorage.getItem("role");
     if (r) {
