@@ -497,9 +497,9 @@ link.click();
 function downloadTemplate(){
 
 let csv =
-`No,Konsumen,Alamat,Blok,Kolektor,Awal Meter,Meter Sekarang,Tagihan,Bayar
-1,Budi,Ngebruk,A1,Slamet,100,110,5000,0
-2,Siti,Ngebruk,A2,Rudi,80,95,7500,7500`;
+`No,Konsumen,Alamat,Blok,Tipe,Kolektor,Awal Meter,Meter Sekarang,Input Meter,Pemakaian,Tagihan,Bayar,Sisa,Status
+1,Budi,Ngebruk,A1,Rumah,Slamet,100,110,0,10,5000,0,5000,Belum Bayar
+2,Siti,Ngebruk,A2,Rumah,Rudi,80,95,0,15,7500,7500,0,Sudah Bayar`;
 
 let blob = new Blob([csv],{
 type:"text/csv;charset=utf-8;"
@@ -507,7 +507,7 @@ type:"text/csv;charset=utf-8;"
 
 let link = document.createElement("a");
 link.href = URL.createObjectURL(blob);
-link.download = "Template_Tirto.csv";
+link.download = "Template_Tirto_Lengkap.csv";
 link.click();
 }
 
