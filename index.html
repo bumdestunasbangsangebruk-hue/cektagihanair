@@ -355,9 +355,13 @@ render(filteredData);
 }
 
 // RENDER CEPAT
+// RENDER DATA
 function render(data) {
+    const headTabel = document.getElementById("headTabel");
+    const bodyTabel = document.getElementById("bodyTabel");
+
     if (data.length === 0) {
-        bodyTabel.innerHTML = `<tr><td colspan="15">Belum ada data</td></tr>`;
+        bodyTabel.innerHTML = `<tr><td colspan="15" style="text-align:center;">Belum ada data</td></tr>`;
         return;
     }
 
@@ -367,18 +371,17 @@ function render(data) {
         headerHtml = `
             <tr>
                 <th>No</th><th>Konsumen</th><th>Alamat</th><th>Blok</th><th>Kolektor</th>
-                <th>Meter Awal</th><th>Meter Akhir</th><th>Pemakaian</th><th>Tagihan</th>
+                <th>Meter Awal</th><th>Meter Akhir (Input)</th><th>Pemakaian</th><th>Tagihan</th>
                 <th>Status</th><th>Bayar</th><th>Sisa</th>
             </tr>`;
     } else {
-        // Mode Publik (Tanpa Login)
         headerHtml = `
             <tr>
                 <th>No</th><th>Konsumen</th><th>Alamat</th><th>Blok</th>
                 <th>Kolektor</th><th>Pemakaian</th><th>Tagihan</th><th>Status</th>
             </tr>`;
     }
-    document.getElementById("headTabel").innerHTML = headerHtml;
+    headTabel.innerHTML = headerHtml;
 
     // 2. ATUR ISI TABEL
     let html = "";
@@ -386,7 +389,77 @@ function render(data) {
         let lama = Number(row["Awal Meter"] || 0);
         let sekarang = Number(row["Meter Sekarang"] || lama);
         let pakai = sekarang - lama;
-if (pakai < 0) pakai = 0;
+        if (pakai < 0) pakai = 0;
+
+        // TARIF BERDASARKAN TIPE
+        let tipe = (row["Tipe"] || "").toLowerCase();
+        let tarif = 0;
+        if (tipe.includes("rumah")) tarif = 500;
+        else if (tipe.includes("niaga")) tarif = 800;
+        else if (tipe.includes("sosial")) tarif = 0;
+
+        let tagihan = pakai * tarif;
+        let bayar = Number(row["Bayar"] || 0);
+        let sisa = tagihan - bayar;
+        let status = sisa <= 0 ? "Lunas" : "Belum Lunas";
+        let klsStatus = sisa <= 0 ? "status-lunas" : "status-belum";
+
+        if (role === "admin" || role === "kolektor") {
+            html += `
+                <tr>
+                    <td>${row["No"] || i + 1}</td>
+                    <td>${row["Konsumen"] || ""}</td>
+                    <td>${row["Alamat"] || ""}</td>
+                    <td>${row["Blok"] || ""}</td>
+                    <td>${row["Kolektor"] || ""}</td>
+                    <td>${lama}</td>
+                    <td>
+                        <input type="number" value="${sekarang}" 
+                        onchange="ubahMeter('${row["No"]}', this.value)" 
+                        style="width:80px; padding:4px;">
+                    </td>
+                    <td>${pakai} m³</td>
+                    <td>Rp ${tagihan.toLocaleString()}</td>
+                    <td class="${klsStatus}">${status}</td>
+                    <td><input type="number" value="${bayar}" 
+                        onchange="ubahBayar('${row["No"]}', this.value)" 
+                        style="width:80px; padding:4px;"></td>
+                    <td>Rp ${sisa.toLocaleString()}</td>
+                </tr>`;
+        } else {
+            html += `
+                <tr>
+                    <td>${row["No"] || i + 1}</td>
+                    <td>${row["Konsumen"] || ""}</td>
+                    <td>${row["Alamat"] || ""}</td>
+                    <td>${row["Blok"] || ""}</td>
+                    <td>${row["Kolektor"] || ""}</td>
+                    <td>${pakai} m³</td>
+                    <td>Rp ${tagihan.toLocaleString()}</td>
+                    <td class="${klsStatus}">${status}</td>
+                </tr>`;
+        }
+    });
+
+    bodyTabel.innerHTML = html;
+}
+
+// FUNGSI PEMBANTU UNTUK UPDATE DATA DI TABEL
+function ubahMeter(no, nilai) {
+    let index = globalData.findIndex(x => x["No"] == no);
+    if (index !== -1) {
+        globalData[index]["Meter Sekarang"] = Number(nilai);
+        render(filteredData);
+    }
+}
+
+function ubahBayar(no, nilai) {
+    let index = globalData.findIndex(x => x["No"] == no);
+    if (index !== -1) {
+        globalData[index]["Bayar"] = Number(nilai);
+        render(filteredData);
+    }
+}
 
 // 🔥 TAMBAHAN TARIF
 let tipe = (row["Tipe"] || "").toLowerCase();
