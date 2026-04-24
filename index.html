@@ -22,6 +22,7 @@ margin:0;
 padding:10px;
 }
 
+/* Header dan logo di bagian atas halaman pelanggan */
 .header{
 background:linear-gradient(135deg,#0060B1,#0099ff);
 color:white;
@@ -30,6 +31,9 @@ text-align:center;
 border-radius:12px;
 position:relative;
 overflow:hidden;
+display:flex;
+flex-direction:column;
+align-items:center;
 }
 
 .logo{
@@ -43,6 +47,7 @@ margin-bottom:10px;
 box-shadow:0 0 15px rgba(255,255,255,.5);
 }
 
+/* Card dan form styling */
 .card{
 background:white;
 padding:15px;
@@ -143,7 +148,9 @@ overflow-x:auto;
 </div>
 
 <!-- SEARCH -->
-<div class="card">
+<div class="card" style="display:flex; flex-direction:column; align-items:center;">
+<!-- Logo di atas pencarian -->
+<img src="image_916921.png" class="logo" style="margin-bottom:10px; width:100px; height:100px;" />
 <input type="text" id="cari" placeholder="Cari pelanggan..." onkeyup="cariData()" />
 </div>
 
