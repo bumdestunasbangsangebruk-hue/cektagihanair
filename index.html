@@ -311,7 +311,9 @@ function uploadCSV() {
     skipEmptyLines: true,
     worker: true,
     complete: async function (res) {
+      console.log("Hasil parse CSV:", res.data); // Debug: lihat hasil parse
       globalData = res.data;
+      console.log("Data globalData setelah parse:", globalData);
       await saveData(); // Simpan data ke database
       await loadData(); // Muat ulang data dari database
       isiKolektor();
@@ -327,6 +329,7 @@ async function loadData() {
   filteredData = globalData;
   isiKolektor();
   render(filteredData);
+  console.log("Data setelah loadData:", globalData);
 }
 
 // Isi list Kolektor
