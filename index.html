@@ -277,27 +277,24 @@ async function fetchData() {
   return data;
 }
 
-// Simpan semua data ke Supabase (hapus dan insert ulang)
+// Simpan semua data ke Supabase (menggunakan upsert)
 async function saveData() {
-  // Hapus semua data lama
-  await fetch(`${SUPABASE_URL}/rest/v1/${TABLE_NAME}`, {
-    method: "DELETE",
-    headers: {
-      "apikey": SUPABASE_KEY,
-      "Authorization": `Bearer ${SUPABASE_KEY}`,
-    },
-  });
-  // Masukkan data baru
   for (const item of globalData) {
-    await fetch(`${SUPABASE_URL}/rest/v1/${TABLE_NAME}`, {
-      method: "POST",
-      headers: {
-        "apikey": SUPABASE_KEY,
-        "Authorization": `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(item),
-    });
+    try {
+      let res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE_NAME}?on_conflict=No`, {
+        method: "POST",
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": `Bearer ${SUPABASE_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(item),
+      });
+      const result = await res.json();
+      console.log("Sukses simpan:", result);
+    } catch (err) {
+      console.error("Gagal simpan:", err);
+    }
   }
 }
 
@@ -315,8 +312,8 @@ function uploadCSV() {
     worker: true,
     complete: async function (res) {
       globalData = res.data;
-      await saveData();
-      await loadData(); // Refresh data dari database
+      await saveData(); // Simpan data ke database
+      await loadData(); // Muat ulang data dari database
       isiKolektor();
       render(filteredData);
       alert("Upload berhasil : " + globalData.length + " data");
@@ -383,14 +380,12 @@ function render(data) {
 
     // Hitung Iuran Makam
     let iuran_makam = Math.max(pakai * tarif + 1000, 7000);
-    // Jika hasil di tagihan di bawah 6000, tetapkan menjadi 7000
     if (tagihan < 6000) {
       iuran_makam = 7000;
     }
 
     let status = sisa <= 0 ? "Sudah Bayar" : "Belum Bayar";
 
-    // Render baris tabel
     if (role === "pengguna") {
       html += `
 <tr>
@@ -461,9 +456,10 @@ function ubahMeterBaru(no, nilai) {
   }
 }
 
-// Simpan perubahan ke Supabase
+// Simpan perubahan ke database
 async function simpanPerubahan() {
   await saveData();
+  await loadData();
   render(filteredData);
   alert("Perubahan berhasil disimpan");
 }
@@ -511,9 +507,9 @@ function downloadTemplate() {
 // Hapus semua data
 function hapusCSV() {
   if (confirm("Yakin hapus semua data?")) {
+    // Reset globalData
     globalData = [];
-    filteredData = [];
-    // Hapus dari Supabase
+    // Hapus semua dari database
     fetch(`${SUPABASE_URL}/rest/v1/${TABLE_NAME}`, {
       method: "DELETE",
       headers: {
