@@ -22,7 +22,6 @@ margin:0;
 padding:10px;
 }
 
-/* Header dan logo di bagian atas halaman pelanggan */
 .header{
 background:linear-gradient(135deg,#0060B1,#0099ff);
 color:white;
@@ -31,9 +30,6 @@ text-align:center;
 border-radius:12px;
 position:relative;
 overflow:hidden;
-display:flex;
-flex-direction:column;
-align-items:center;
 }
 
 .logo{
@@ -45,6 +41,20 @@ padding:8px;
 border-radius:50%;
 margin-bottom:10px;
 box-shadow:0 0 15px rgba(255,255,255,.5);
+}
+
+/* Header tambahan untuk teks di bawah logo */
+.header-text{
+margin-top:10px;
+font-size:18px;
+font-weight:bold;
+}
+
+/* Style tambahan untuk kolom baru */
+th, td {
+  padding:8px;
+  border-bottom:1px solid #ddd;
+  text-align:left;
 }
 
 /* Card dan form styling */
@@ -99,8 +109,7 @@ font-weight:bold;
 }
 
 .status-belum{
-color:red;
-font-weight:bold;
+color:red;font-weight:bold;
 }
 
 .wrap{
@@ -124,6 +133,8 @@ overflow-x:auto;
 <img src="image_916921.png" class="logo" />
 <h2 style="margin:0;">TIRTO LANGGENG</h2>
 <p style="margin:5px 0 0 0;">BUMDes Tunas Bangsa Ngebruk</p>
+<!-- Tambahkan teks di bawah logo -->
+<div class="header-text">Tirto Langgeng</div>
 </div>
 
 <!-- ADMIN PANEL -->
@@ -169,6 +180,8 @@ overflow-x:auto;
 <th>Meter Akhir</th>
 <th>Meter Baru</th>
 <th>Pemakaian</th>
+<!-- Tambahkan kolom Iuran Makam -->
+<th>Iuran Makam</th>
 <th>Tagihan</th>
 <th>Status</th>
 <th>Bayar</th>
@@ -177,7 +190,7 @@ overflow-x:auto;
 </thead>
 <tbody id="bodyTabel">
 <tr>
-<td colspan="13" style="text-align:center;padding:20px;">Belum ada data</td>
+<td colspan="14" style="text-align:center;padding:20px;">Belum ada data</td>
 </tr>
 </tbody>
 </table>
@@ -351,7 +364,7 @@ function render(data) {
   const isAdminOrKolektor = role === "admin" || role === "kolektor";
 
   if (data.length === 0) {
-    document.getElementById("bodyTabel").innerHTML = `<tr><td colspan="13" style="text-align:center;padding:20px;">Belum ada data</td></tr>`;
+    document.getElementById("bodyTabel").innerHTML = `<tr><td colspan="14" style="text-align:center;padding:20px;">Belum ada data</td></tr>`;
     return;
   }
 
@@ -362,6 +375,7 @@ function render(data) {
     let meter_baru = row["Meter Baru"] || "";
     let kolektor = row["Kolektor"] || "";
     let tipe = row["Tipe"] || "";
+    let tarif = Number(row["Tarif"] || 0); // Pastikan ada field Tarif
 
     let pakai = sekarang - lama;
     if (pakai < 0) pakai = 0;
@@ -370,8 +384,16 @@ function render(data) {
     let bayar = Number(row["Bayar"] || 0);
     let sisa = tagihan - bayar;
 
+    // Hitung Iuran Makam
+    let iuran_makam = Math.max(pakai * tarif + 1000, 7000);
+    // Jika hasil di tagihan di bawah 6000, tetapkan menjadi 7000
+    if (tagihan < 6000) {
+      iuran_makam = 7000;
+    }
+
     let status = sisa <= 0 ? "Sudah Bayar" : "Belum Bayar";
 
+    // Render baris tabel
     if (role === "pengguna") {
       html += `
 <tr>
@@ -385,6 +407,8 @@ function render(data) {
 <td>${sekarang}</td>
 <td></td>
 <td>${pakai}</td>
+<!-- Kolom Iuran Makam -->
+<td>Rp. ${iuran_makam.toLocaleString()}</td>
 <td>${tagihan}</td>
 <td class="${status==='Sudah Bayar'?'status-lunas':'status-belum'}">${status}</td>
 <td>${bayar}</td>
@@ -411,6 +435,8 @@ function render(data) {
 <td>
   <input type="number" min="0" value="${meter_baru}" ${isAdminOrKolektor ? "" : "disabled"} onchange="ubahMeterBaru(${row["No"]},this.value)">
 </td>
+<!-- Kolom Iuran Makam -->
+<td>Rp. ${iuran_makam.toLocaleString()}</td>
 <td>${pakai}</td>
 <td>${tagihan}</td>
 <td class="${status==='Sudah Bayar'?'status-lunas':'status-belum'}">${status}</td>
